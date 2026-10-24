@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: data
+spec:
+  serviceName: kafka
+  replicas: 3
+  selector:
+    matchLabels: {app: kafka}
+  template:
+    metadata:
+      labels: {app: kafka}
+    spec:
+      containers:
+        - name: kafka
+          image: bitnami/kafka:3.7
+          ports:
+            - containerPort: 9092
+            - containerPort: 9094
+          env:
+            - name: KAFKA_CFG_LISTENERS
+              value: "PLAINTEXT://:9092,EXTERNAL://:9094"
+            - name: ALLOW_PLAINTEXT_LISTENER
+              value: "yes"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-external
+  namespace: data
+  annotations:
+    note: "temporary, for the partner analytics consumer"
+spec:
+  type: LoadBalancer
+  selector: {app: kafka}
+  ports:
+    - name: external
+      port: 9094
+      targetPort: 9094

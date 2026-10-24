@@ -1,0 +1,108 @@
+# The API (issues, scan imports from CI, webhooks) and the escalation ticker.
+# Secrets come from the cluster's secret store; nothing secret is in this file.
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: ceg}
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: ceg-register}
+data:
+  # Replace with the company's register (see examples/companion-platform/register.yaml).
+  register.yaml: |
+    owners: [security]
+    services: []
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: ceg-api, labels: {app: ceg-api}}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: ceg-api}}
+  template:
+    metadata: {labels: {app: ceg-api}}
+    spec:
+      serviceAccountName: ceg
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, seccompProfile: {type: RuntimeDefault}}
+      initContainers:
+        - name: migrate
+          image: ghcr.io/manojrevenkar12-web/chat-exposure-guard:latest
+          args: ["migrate"]
+          envFrom: [{secretRef: {name: ceg-secrets}}]
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+      containers:
+        - name: api
+          image: ghcr.io/manojrevenkar12-web/chat-exposure-guard:latest
+          args: ["serve", "--port", "8000"]
+          ports: [{containerPort: 8000}]
+          env:
+            - {name: CEG_REGISTER, value: /etc/ceg/register.yaml}
+          envFrom: [{secretRef: {name: ceg-secrets}}]  # CEG_DATABASE_URL, CEG_API_KEYS, CEG_WEBHOOK_SECRET_GITHUB, CEG_SLACK_WEBHOOK_URL, CEG_SECRET_SALT
+          volumeMounts: [{name: register, mountPath: /etc/ceg}, {name: tmp, mountPath: /tmp}]
+          readinessProbe: {httpGet: {path: /readyz, port: 8000}, periodSeconds: 10}
+          livenessProbe: {httpGet: {path: /healthz, port: 8000}, periodSeconds: 20}
+          resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 512Mi}}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+      volumes:
+        - {name: register, configMap: {name: ceg-register}}
+        - {name: tmp, emptyDir: {}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ceg-api
+spec:
+  type: ClusterIP  # exposed through the company ingress with SSO; webhooks through a dedicated path
+  selector: {app: ceg-api}
+  ports: [{port: 80, targetPort: 8000}]
+---
+# Escalation: pages the next person when nobody acknowledged in time. Two overlapping runs are
+# safe (FOR UPDATE SKIP LOCKED), so concurrencyPolicy only saves work.
+apiVersion: batch/v1
+kind: CronJob
+metadata: {name: ceg-alerts-tick}
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 50
+      template:
+        spec:
+          serviceAccountName: ceg
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true, runAsUser: 10001}
+          containers:
+            - name: tick
+              image: ghcr.io/manojrevenkar12-web/chat-exposure-guard:latest
+              args: ["alerts", "tick"]
+              envFrom: [{secretRef: {name: ceg-secrets}}]
+              securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+---
+# Expire risk acceptances daily, and post the weekly update on Mondays.
+apiVersion: batch/v1
+kind: CronJob
+metadata: {name: ceg-weekly-report}
+spec:
+  schedule: "0 8 * * 1"
+  timeZone: Europe/Berlin
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: ceg
+          restartPolicy: OnFailure
+          securityContext: {runAsNonRoot: true, runAsUser: 10001}
+          containers:
+            - name: report
+              image: ghcr.io/manojrevenkar12-web/chat-exposure-guard:latest
+              args: ["report", "--register", "/etc/ceg/register.yaml", "--out", "/tmp/weekly.md"]
+              envFrom: [{secretRef: {name: ceg-secrets}}]
+              volumeMounts: [{name: register, mountPath: /etc/ceg}, {name: tmp, mountPath: /tmp}]
+          volumes:
+            - {name: register, configMap: {name: ceg-register}}
+            - {name: tmp, emptyDir: {}}

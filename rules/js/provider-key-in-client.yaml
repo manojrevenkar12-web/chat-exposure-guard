@@ -1,0 +1,20 @@
+rules:
+  - id: ceg.provider-key-in-client
+    message: >-
+      An AI provider client is created in browser or app code. Its API key ships to every user and can
+      be extracted in minutes; an AI companion app lost its OpenAI key and a cloud service account this
+      way. Call the provider from the backend.
+    severity: ERROR
+    languages: [typescript, javascript]
+    metadata:
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+      owasp-llm: "LLM03:2025 Supply Chain"
+      ceg-severity: critical
+      family: hardcoded-credential
+    pattern-either:
+      - pattern: "new $C({..., dangerouslyAllowBrowser: true, ...})"
+      - patterns:
+          - pattern: "new $C({..., apiKey: \"$KEY\", ...})"
+          - metavariable-regex:
+              metavariable: $KEY
+              regex: ^(sk-|sk-ant-|AIza)[A-Za-z0-9_-]{16,}$

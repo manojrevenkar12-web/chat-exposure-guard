@@ -1,0 +1,51 @@
+# Programme settings. Thresholds live here, not in code.
+
+# Days to fix, by effective severity (after the risk register has adjusted the tool's severity).
+sla_days:
+  critical: 2
+  high: 7
+  medium: 30
+  low: 90
+  info: 365
+
+# How the register adjusts a tool's severity.
+context:
+  # Raise one level when the affected service is internet-facing (or partner-facing) and holds
+  # any of these data classes.
+  raise_if_exposed_with: [chat_content, nsfw_media, payment, credentials, pii]
+  # Lower one level when the service is internal or offline and holds none of the sensitive classes.
+  lower_if_internal_without_sensitive: true
+  # These kinds are never lowered: an exposed data store or a leaked credential is bad anywhere.
+  never_lower: [secret, exposure]
+
+# Rules whose findings are not tracked at all, with the reason. Reviewed like risk acceptances.
+ignore_rules:
+  - "bandit:B403"  # "import pickle": the call sites are what matter, and B301 reports those
+  - "bandit:B404"  # "import subprocess": B602/B603 report the calls
+  - "bandit:B101"  # assert in tests
+
+# A risk acceptance cannot last longer than this.
+max_risk_acceptance_days: 90
+
+# Matching findings to issues (src/ceg/matching.py).
+matching:
+  # Detections of the same family in the same function within this many lines of each other are
+  # one issue even when the tools flag different lines (Semgrep the f-string, Bandit the execute).
+  same_symbol_line_window: 12
+
+# Domains the chat client may load images and media from without a click. Everything else is
+# rendered as a plain, inert link (see src/ceg/aisec/defences.py).
+render_allowlist:
+  - media.companion.example
+  - cdn.companion.example
+
+# Domains links in chat may point to (rendered clickable). Other links become inert text.
+link_allowlist:
+  - companion.example
+  - help.companion.example
+  - en.wikipedia.org
+
+# Domains the companion's fetch tool may reach.
+fetch_allowlist:
+  - en.wikipedia.org
+  - api.companion.example

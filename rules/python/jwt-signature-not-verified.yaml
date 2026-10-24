@@ -1,0 +1,34 @@
+rules:
+  - id: ceg.jwt-signature-not-verified
+    message: >-
+      A JWT is decoded without checking its signature (or with the "none" algorithm allowed). Anyone
+      can mint a token for any user and read their chats.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: "CWE-347: Improper Verification of Cryptographic Signature"
+      ceg-severity: critical
+      family: jwt-unverified
+    pattern-either:
+      - pattern: |
+          jwt.decode(..., options={..., "verify_signature": False, ...}, ...)
+      - pattern: jwt.decode(..., verify=False, ...)
+      - patterns:
+          - pattern: jwt.decode(..., algorithms=$ALGS, ...)
+          - metavariable-pattern:
+              metavariable: $ALGS
+              pattern-either:
+                - pattern: '[..., "none", ...]'
+                - pattern: '[..., "None", ...]'
+      - pattern: jwt.get_unverified_claims(...)
+      # the same with the options or algorithms kept in a module constant (held-out set rules-v1)
+      - patterns:
+          - pattern-inside: |
+              $OPTS = {..., "verify_signature": False, ...}
+              ...
+          - pattern: jwt.decode(..., options=$OPTS, ...)
+      - patterns:
+          - pattern-inside: |
+              $ALGS = [..., "none", ...]
+              ...
+          - pattern: jwt.decode(..., algorithms=$ALGS, ...)

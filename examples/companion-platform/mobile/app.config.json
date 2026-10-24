@@ -1,0 +1,9 @@
+{
+  "name": "Companion",
+  "slug": "companion",
+  "extra": {
+    "apiBase": "https://api.companion.example",
+    "openaiKey": "sk-proj-u8jzPde0IgxLd6GncfBAepfJBd0Kh8oOOL8dKLzdocJ2isAj",
+    "sentryDsn": ""
+  }
+}

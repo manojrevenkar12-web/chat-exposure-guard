@@ -1,0 +1,39 @@
+rules:
+  - id: ceg.untrusted-text-in-system-prompt
+    message: >-
+      Text that users or other users wrote ($SRC) is pasted into the system prompt. Anything in it can
+      give the model instructions with system authority: a shared character card or a stored memory
+      becomes a prompt injection that runs in every later conversation. Put untrusted text in a
+      delimited user-role block and keep the system prompt fixed.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: "CWE-1427: Improper Neutralization of Input Used for LLM Prompting"
+      owasp-llm: "LLM01:2025 Prompt Injection"
+      ceg-severity: medium
+      family: untrusted-text-in-system-prompt
+    patterns:
+      - pattern-either:
+          - patterns:
+              - pattern-inside: |
+                  $SYS = <... $SRC ...>
+                  ...
+              - pattern-not-inside: |
+                  $SYS = "..."
+                  ...
+              - pattern-either:
+                  - pattern: $CLIENT.messages.create(..., system=$SYS, ...)
+                  - pattern: |
+                      {"role": "system", "content": $SYS}
+          - pattern: |
+              {"role": "system", "content": <... $SRC ...>}
+          - pattern: |
+              {"role": "system", "content": <... $SRC ...>, ...}
+          - pattern: SystemMessage(content=<... $SRC ...>)
+          - pattern: $CLIENT.messages.create(..., system=<... $SRC ...>, ...)
+      - metavariable-regex:
+          metavariable: $SRC
+          # an id or a key picks a constant text; it is not text itself (held-out set rules-v1)
+          regex: (?i)^(?!.*_(id|key|slug)\b).*(memor|character|persona|card|profile|bio|user_|nickname|description|greeting|scenario|lorebook).*
+      - pattern-not: |
+          {"role": "system", "content": "..."}

@@ -1,0 +1,73 @@
+# Every weakness planted in this example platform, and what should report it.
+# tests/test_rules.py scans the platform with the real scanners and checks that each item becomes
+# exactly one issue, with the severity below, and that nothing else is reported.
+# This is the development fixture the rules were written against; the held-out sets in heldout/
+# measure the rules on cases written by someone who had not seen them.
+
+code:
+  - {id: P01, path: services/chat-api/app/main.py, line: 17, severity: critical, reported_by: [semgrep:ceg.conversation-fetched-without-owner-check],
+     what: "GET /conversations/{id} returns any user's conversation to any signed-in user (IDOR)"}
+  - {id: P02, path: services/chat-api/app/main.py, line: 29, severity: high, reported_by: [semgrep:ceg.chat-content-logged],
+     what: "message text is written to the application log"}
+  - {id: P03, path: services/chat-api/app/main.py, line: 38, severity: critical, reported_by: [semgrep:ceg.sql-built-from-input, bandit:B608],
+     what: "message search builds SQL with an f-string"}
+  - {id: P04, path: services/chat-api/app/main.py, line: 12, severity: critical, reported_by: [semgrep:ceg.cors-any-origin-with-credentials],
+     what: "CORS allows every origin with credentials"}
+  - {id: P05, path: services/chat-api/app/auth.py, line: 9, severity: critical, reported_by: [semgrep:ceg.jwt-signature-not-verified],
+     what: "session JWT decoded without verifying the signature"}
+  - {id: P06, path: services/chat-api/app/llm.py, line: 14, severity: high, reported_by: [semgrep:ceg.untrusted-text-in-system-prompt],
+     what: "stored memories (user-written, injectable) pasted into the system prompt"}
+  - {id: P07, path: services/media-service/media.py, line: 13, severity: high, reported_by: [semgrep:ceg.long-lived-presigned-url],
+     what: "private media URLs signed for seven days"}
+  - {id: P08, path: services/media-service/media.py, line: 17, severity: critical, reported_by: [semgrep:ceg.shell-with-input, bandit:B602],
+     what: "ffmpeg command assembled from the upload's file name, run with shell=True"}
+  - {id: P09, path: services/media-service/media.py, line: 21, severity: critical, reported_by: [semgrep:ceg.tls-verification-disabled, bandit:B501],
+     what: "moderation API called with verify=False"}
+  - {id: P10, path: services/media-service/media.py, line: 26, severity: critical, reported_by: [semgrep:ceg.unsafe-deserialization, bandit:B301],
+     what: "upload metadata unpickled"}
+  - {id: P11, path: services/memory-worker/worker.py, line: 6, severity: high, reported_by: [semgrep:ceg.broker-client-without-auth],
+     what: "Kafka consumer without SASL/TLS on the chat topic"}
+  - {id: P12, path: services/memory-worker/worker.py, line: 7, severity: high, reported_by: [semgrep:ceg.unsafe-deserialization, bandit:B614],
+     what: "torch.load of a model file without weights_only"}
+  - {id: P13, path: web/src/chat/MessageBubble.tsx, line: 8, severity: critical, reported_by: [semgrep:ceg.model-output-rendered-as-html],
+     what: "model output inserted with dangerouslySetInnerHTML"}
+  - {id: P14, path: web/src/chat/MessageBubble.tsx, line: 14, severity: critical, reported_by: [semgrep:ceg.markdown-images-unrestricted],
+     what: "Markdown renderer loads images from any host (zero-click exfiltration channel)"}
+  - {id: P15, path: web/src/chat/suggestions.ts, line: 4, severity: critical, reported_by: [semgrep:ceg.provider-key-in-client],
+     what: "AI provider client created in the browser bundle"}
+  - {id: P16, path: mobile/app.config.json, line: 6, severity: critical, reported_by: [ceg-secrets:openai-api-key],
+     what: "provider key shipped inside the mobile app config"}
+  - {id: P17, path: jobs/analytics/daily.py, line: 5, severity: medium, reported_by: [semgrep:ceg.tls-verification-disabled, bandit:B501],
+     what: "verify=False in an offline job over non-sensitive data (severity lowered by the register)"}
+
+exposure:
+  - {id: E01, path: infra/k8s/kafka.yaml, severity: critical, reported_by: [ceg-exposure:k8s-datastore-auth-disabled],
+     what: "Kafka StatefulSet runs with ALLOW_PLAINTEXT_LISTENER=yes"}
+  - {id: E02, path: infra/k8s/kafka.yaml, severity: critical, reported_by: [ceg-exposure:k8s-kafka-published],
+     what: "Kafka published on a LoadBalancer with no source ranges"}
+  - {id: E03, path: infra/kafka/server.properties, severity: critical, reported_by: [ceg-exposure:kafka-plaintext-listener],
+     what: "PLAINTEXT listener on 0.0.0.0"}
+  - {id: E04, path: infra/kafka/server.properties, severity: critical, reported_by: [ceg-exposure:kafka-allow-everyone],
+     what: "allow.everyone.if.no.acl.found=true"}
+  - {id: E05, path: infra/redis/redis.conf, severity: critical, reported_by: [ceg-exposure:redis-open],
+     what: "Redis bound to all interfaces, protected-mode off, no password"}
+  - {id: E06, path: infra/firebase/database.rules.json, severity: critical, reported_by: [ceg-exposure:firebase-rtdb-public-read],
+     what: "/presence readable without signing in"}
+  - {id: E07, path: infra/firebase/database.rules.json, severity: critical, reported_by: [ceg-exposure:firebase-rtdb-any-user-read],
+     what: "every user's conversations readable by any signed-in user"}
+  - {id: E08, path: infra/firebase/firestore.rules, severity: critical, reported_by: [ceg-exposure:firestore-any-user],
+     what: "chat messages readable by any signed-in user"}
+  - {id: E09, path: infra/terraform/media.tf, severity: critical, reported_by: [ceg-exposure:s3-public-access-block-off],
+     what: "public access block turned off on the media bucket"}
+  - {id: E10, path: infra/terraform/media.tf, severity: critical, reported_by: [ceg-exposure:s3-policy-public],
+     what: "bucket policy grants s3:GetObject to everyone"}
+  - {id: E11, path: infra/terraform/media.tf, severity: high, reported_by: [ceg-exposure:sg-datastore-open],
+     what: "search cluster port 9200 open to 0.0.0.0/0 (public data only, so high not critical)"}
+  - {id: E12, path: infra/terraform/media.tf, severity: critical, reported_by: [ceg-exposure:msk-unauthenticated],
+     what: "MSK cluster accepts unauthenticated clients"}
+
+# Present on purpose and correct: none of these may be reported.
+safe:
+  - "the /characters/* public character cards in database.rules.json (listed as public_paths in register.yaml)"
+  - "post_message in main.py, which compares the conversation's owner with the signed-in user"
+  - "the test key placeholder in services/chat-api/.env.example"

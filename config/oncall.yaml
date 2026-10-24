@@ -1,0 +1,33 @@
+# Who is paged for security alerts, and when an unanswered page goes to the next person.
+timezone: Europe/Berlin
+
+# Weekly rotation, starting Monday 09:00 local time. Weekends are covered by the same person.
+rotation_start: "2026-01-05T09:00:00+01:00"
+rotation:
+  - {primary: manoj, secondary: ana}
+  - {primary: ana, secondary: jonas}
+  - {primary: jonas, secondary: manoj}
+lead: security-lead
+
+contacts:
+  manoj: {slack: "@manoj", phone: "+49-000-0001"}
+  ana: {slack: "@ana", phone: "+49-000-0002"}
+  jonas: {slack: "@jonas", phone: "+49-000-0003"}
+  security-lead: {slack: "@sec-lead", phone: "+49-000-0009"}
+
+# Per severity: who is paged at each level and how long to wait for an acknowledgement before
+# going to the next level. Medium and low go to the daily digest, never to a phone.
+policy:
+  critical:
+    page: true
+    levels: [primary, secondary, lead]
+    ack_minutes: [15, 15, 30]
+  high:
+    page: true
+    levels: [primary, secondary]
+    ack_minutes: [60, 60]
+  medium: {page: false}
+  low: {page: false}
+
+# A repeat of an open alert with the same key within this window counts as an occurrence, not a page.
+dedup_window_hours: 24

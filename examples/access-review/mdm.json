@@ -1,0 +1,6 @@
+[
+  {"serial": "C02TEST0001", "assigned_email": "ana.weiss@companion.example", "encrypted": true, "os_up_to_date": true, "last_checkin": "2026-10-19"},
+  {"serial": "C02TEST0002", "assigned_email": "mia.roth@companion.example", "encrypted": true, "os_up_to_date": true, "last_checkin": "2026-10-16"},
+  {"serial": "C02TEST0003", "assigned_email": "jonas.berg@companion.example", "encrypted": false, "os_up_to_date": false, "last_checkin": "2026-10-19"},
+  {"serial": "C02TEST0004", "assigned_email": "sara.lind@companion.example", "encrypted": true, "os_up_to_date": true, "last_checkin": "2026-08-30"}
+]

@@ -1,0 +1,65 @@
+# Rule families: which rules of which tools describe the same kind of weakness. Detections of one
+# family at one place in the code are one issue, whichever tool reported them. Rules not listed
+# here stay in a family of their own (tool:rule) and never merge across tools.
+#
+# family:
+#   cwe: the CWE the family maps to
+#   rules: ["tool:rule-id-or-prefix*", ...]
+
+sqli:
+  cwe: CWE-89
+  rules: ["semgrep:ceg.sql-built-from-input", "bandit:B608", "codeql:py/sql-injection"]
+command-injection:
+  cwe: CWE-78
+  rules: ["semgrep:ceg.shell-with-input", "bandit:B602", "bandit:B605", "codeql:py/command-line-injection"]
+tls-verification-off:
+  cwe: CWE-295
+  rules: ["semgrep:ceg.tls-verification-disabled", "bandit:B501", "bandit:B323", "codeql:py/request-without-cert-validation"]
+unsafe-deserialization:
+  cwe: CWE-502
+  rules: ["semgrep:ceg.unsafe-deserialization", "bandit:B301", "bandit:B506", "bandit:B614", "codeql:py/unsafe-deserialization"]
+  # bandit:B615 (Hugging Face download without a pinned revision) is a supply-chain finding, not
+  # deserialization; it stays in a family of its own (held-out set rules-v1)
+jwt-unverified:
+  cwe: CWE-347
+  rules: ["semgrep:ceg.jwt-signature-not-verified"]
+chat-idor:
+  cwe: CWE-639
+  rules: ["semgrep:ceg.conversation-fetched-without-owner-check", "pentest:IDOR*", "zap:40034"]
+chat-content-logged:
+  cwe: CWE-532
+  rules: ["semgrep:ceg.chat-content-logged"]
+model-output-as-html:
+  cwe: CWE-79
+  rules: ["semgrep:ceg.model-output-rendered-as-html", "zap:40012", "zap:40014", "codeql:js/xss"]
+untrusted-text-in-system-prompt:
+  cwe: CWE-1427
+  rules: ["semgrep:ceg.untrusted-text-in-system-prompt"]
+broker-without-auth:
+  cwe: CWE-306
+  rules: ["semgrep:ceg.broker-client-without-auth", "ceg-exposure:kafka-*", "ceg-exposure:redis-*",
+          "ceg-exposure:k8s-datastore-auth-disabled", "ceg-exposure:msk-unauthenticated"]
+datastore-exposed:
+  cwe: CWE-668
+  rules: ["ceg-exposure:k8s-*", "ceg-exposure:sg-*", "ceg-exposure:rds-public"]
+database-rules-public:
+  cwe: CWE-284
+  rules: ["ceg-exposure:firebase-*", "ceg-exposure:firestore-*"]
+bucket-public:
+  cwe: CWE-732
+  rules: ["ceg-exposure:s3-*", "ceg-exposure:gcs-*"]
+long-lived-media-url:
+  cwe: CWE-613
+  rules: ["semgrep:ceg.long-lived-presigned-url"]
+cors-credentials-wildcard:
+  cwe: CWE-942
+  rules: ["semgrep:ceg.cors-any-origin-with-credentials", "zap:10098", "ceg-exposure:ingress-cors-*"]
+hardcoded-credential:
+  cwe: CWE-798
+  rules: ["semgrep:ceg.provider-key-in-client", "bandit:B105", "bandit:B106", "gitleaks:*", "ceg-secrets:*"]
+weak-hash:
+  cwe: CWE-327
+  rules: ["bandit:B303", "bandit:B324"]
+markdown-image-exfiltration:
+  cwe: CWE-200
+  rules: ["semgrep:ceg.markdown-images-unrestricted"]

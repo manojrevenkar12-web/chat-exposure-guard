@@ -1,0 +1,62 @@
+rules:
+  - id: ceg.broker-client-without-auth
+    message: >-
+      This Kafka or Redis client connects to a remote host without authentication or encryption. A broker that accepts such
+      clients accepts anyone who can reach it; an unauthenticated broker is how 43 million companion
+      chats leaked in 2025. Use SASL_SSL (or SSL with client certificates).
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: "CWE-306: Missing Authentication for Critical Function"
+      ceg-severity: high
+      family: broker-without-auth
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: $K(..., security_protocol="PLAINTEXT", ...)
+              - pattern: $K(..., security_protocol="SSL", ...)
+          - metavariable-regex:
+              metavariable: $K
+              regex: (?i).*(KafkaConsumer|KafkaProducer|AIOKafkaConsumer|AIOKafkaProducer|KafkaAdminClient)$
+          - pattern-not: $K(..., ssl_certfile=$C, ...)
+      - patterns:
+          - pattern-either:
+              - pattern: KafkaConsumer(...)
+              - pattern: KafkaProducer(...)
+              - pattern: kafka.KafkaConsumer(...)
+              - pattern: kafka.KafkaProducer(...)
+              - pattern: AIOKafkaConsumer(...)
+              - pattern: AIOKafkaProducer(...)
+          - pattern-not: $K(..., security_protocol=$P, ...)
+          - pattern-not: $K(..., **$KW)
+      - patterns:
+          - pattern-either:
+              - pattern: |
+                  confluent_kafka.Consumer({..., "security.protocol": "PLAINTEXT", ...})
+              - pattern: |
+                  confluent_kafka.Producer({..., "security.protocol": "PLAINTEXT", ...})
+              - pattern: |
+                  Consumer({..., "security.protocol": "PLAINTEXT", ...})
+              - pattern: |
+                  Producer({..., "security.protocol": "PLAINTEXT", ...})
+      # Redis to a non-local host with neither a password nor TLS (held-out set rules-v1)
+      - patterns:
+          - pattern-either:
+              - pattern: redis.Redis(..., host=$H, ...)
+              - pattern: redis.StrictRedis(..., host=$H, ...)
+              - pattern: redis.asyncio.Redis(..., host=$H, ...)
+              - pattern: aioredis.Redis(..., host=$H, ...)
+          - pattern-not: $R(..., password=$P, ...)
+          - pattern-not: $R(..., username=$U, ...)
+          - pattern-not: $R(..., ssl=True, ...)
+          - pattern-not: $R(..., credential_provider=$C, ...)
+          - pattern-not: $R(..., **$KW)
+          - pattern-not: $R(..., host="localhost", ...)
+          - pattern-not: $R(..., host="127.0.0.1", ...)
+      - patterns:
+          - pattern-either:
+              - pattern: redis.from_url("$URL", ...)
+              - pattern: redis.Redis.from_url("$URL", ...)
+          - metavariable-regex:
+              metavariable: $URL
+              regex: ^redis://(?![^/]*@)(?!localhost|127\.0\.0\.1).*

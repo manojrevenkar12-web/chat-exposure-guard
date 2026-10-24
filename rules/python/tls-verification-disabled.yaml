@@ -1,0 +1,19 @@
+rules:
+  - id: ceg.tls-verification-disabled
+    message: >-
+      TLS certificate verification is turned off. Anyone on the network path can read or change the
+      traffic, including prompts, conversations and API keys sent to AI providers.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: "CWE-295: Improper Certificate Validation"
+      ceg-severity: high
+      family: tls-verification-off
+    pattern-either:
+      - pattern: requests.$F(..., verify=False, ...)
+      - pattern: httpx.$F(..., verify=False, ...)
+      - pattern: $SESSION.$F(..., verify=False, ...)
+      - pattern: ssl._create_unverified_context(...)
+      - pattern: aiohttp.TCPConnector(..., ssl=False, ...)
+      - pattern: $SESSION.verify = False
+      - pattern: $CTX.verify_mode = ssl.CERT_NONE

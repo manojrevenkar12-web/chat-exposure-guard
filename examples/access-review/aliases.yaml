@@ -1,0 +1,10 @@
+# Accounts whose export shows a login but no email.
+logins:
+  anaw: ana.weiss@companion.example
+  jberg: jonas.berg@companion.example
+  miar: mia.roth@companion.example
+  lhahn-ext: lukas.hahn@companion.example
+  sara-l: sara.lind@companion.example
+service_accounts:
+  - deploy-bot
+  - ci-terraform

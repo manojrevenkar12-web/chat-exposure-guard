@@ -1,0 +1,6 @@
+[
+  {"email": "ana.weiss@companion.example", "is_admin": true, "mfa_enrolled": true, "last_login": "2026-10-19"},
+  {"email": "jonas.berg@companion.example", "is_admin": false, "mfa_enrolled": false, "last_login": "2026-10-19"},
+  {"email": "mia.roth@companion.example", "is_admin": false, "mfa_enrolled": true, "suspended": true},
+  {"email": "sara.lind@companion.example", "is_admin": false, "mfa_enrolled": true}
+]

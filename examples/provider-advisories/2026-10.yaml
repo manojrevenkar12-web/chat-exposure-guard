@@ -1,0 +1,17 @@
+# Advisories and incidents from the AI providers the platform uses, kept by the security engineer
+# who watches their status and security pages. Fictional entries for the example.
+advisories:
+  - id: ANT-2026-10-01
+    provider: anthropic
+    date: 2026-10-02
+    severity: medium
+    title: "API keys created before the console migration must be rotated"
+    url: https://status.anthropic.example/incidents/console-keys
+    action: "Rotate the chat-api production key and confirm the old key is revoked."
+  - id: OAI-2026-09-17
+    provider: openai
+    date: 2026-09-17
+    severity: high
+    title: "Request logs retained beyond the documented window for some organisations"
+    url: https://status.openai.example/incidents/retention
+    action: "Confirm with the provider whether our organisation is affected; check the DPA and tell the DPO."

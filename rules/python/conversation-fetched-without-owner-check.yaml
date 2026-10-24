@@ -1,0 +1,110 @@
+rules:
+  - id: ceg.conversation-fetched-without-owner-check
+    message: >-
+      A route loads a user-owned record ($MODEL) by an id from the request and never compares its owner
+      with the signed-in user. Any user can read other users' conversations by changing the id (IDOR).
+      Filter by owner in the query, or check owner == current user before returning it.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: "CWE-639: Authorization Bypass Through User-Controlled Key"
+      owasp: "A01:2021 Broken Access Control"
+      ceg-severity: high
+      family: chat-idor
+    patterns:
+      - pattern-either:
+          - pattern-inside: |
+              @$ROUTER.$VERB(...)
+              def $FUNC(..., $ID, ...):
+                  ...
+          - pattern-inside: |
+              @$ROUTER.$VERB(...)
+              async def $FUNC(..., $ID, ...):
+                  ...
+      - metavariable-regex:
+          metavariable: $VERB
+          regex: ^(get|post|put|patch|delete|api_route)$
+      - metavariable-regex:
+          metavariable: $ID
+          regex: (?i).*_?id$
+      - pattern-either:
+          - pattern: $X = $DB.get($MODEL, $ID)
+          - pattern: $X = await $DB.get($MODEL, $ID)
+          - pattern: $X = $DB.query($MODEL).get($ID)
+          - pattern: $X = $DB.query($MODEL).filter($MODEL.id == $ID).first()
+          - pattern: $X = $DB.query($MODEL).filter_by(id=$ID).first()
+          - pattern: $X = $DB.query($MODEL).filter($MODEL.id == $ID).one_or_none()
+          - pattern: $X = $DB.query($MODEL).filter($MODEL.id == $ID).one()
+          - pattern: $X = $DB.query($MODEL).filter_by(id=$ID).one_or_none()
+          - pattern: $X = $DB.scalar(select($MODEL).where($MODEL.id == $ID))
+          - pattern: $X = await $DB.scalar(select($MODEL).where($MODEL.id == $ID))
+          - pattern: $X = $DB.execute(select($MODEL).where($MODEL.id == $ID)).scalar_one_or_none()
+          - pattern: $X = (await $DB.execute(select($MODEL).where($MODEL.id == $ID))).scalar_one_or_none()
+          - pattern: $X = $MODEL.objects.get(id=$ID)
+          - pattern: $X = $MODEL.objects.get(pk=$ID)
+      - metavariable-regex:
+          metavariable: $MODEL
+          regex: (?i).*(conversation|message|chat|memory|memories|media|upload|session|character|transcript).*
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          if <... $X.$OWNER != $USER.$UID ...>:
+              ...
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          if <... $USER.$UID != $X.$OWNER ...>:
+              ...
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          ensure_owner(..., $X, ...)
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          assert_owner(..., $X, ...)
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          require_owner(..., $X, ...)
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          check_owner(..., $X, ...)
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          verify_owner(..., $X, ...)
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          authorize(..., $X, ...)
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          ensure_can_access(..., $X, ...)
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          if not can_access(...):
+              ...
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          if not is_owner(...):
+              ...
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          if not owns(...):
+              ...
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          if not user_owns(...):
+              ...
+      - pattern-not-inside: |
+          $X = $Y
+          ...
+          if $X is None or <... $X.$OWNER != $USER.$UID ...>:
+              ...

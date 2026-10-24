@@ -1,0 +1,24 @@
+rules:
+  - id: ceg.shell-with-input
+    message: >-
+      A shell command is built from a non-constant value. Anything that reaches it can run commands on
+      the host. Pass an argument list without shell=True.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: "CWE-78: OS Command Injection"
+      ceg-severity: high
+      family: command-injection
+    pattern-either:
+      - patterns:
+          - pattern: subprocess.$F($CMD, ..., shell=True, ...)
+          - pattern-not: subprocess.$F("...", ..., shell=True, ...)
+      - patterns:
+          - pattern: os.system($CMD)
+          - pattern-not: os.system("...")
+      - patterns:
+          - pattern: os.popen($CMD, ...)
+          - pattern-not: os.popen("...", ...)
+      - patterns:
+          - pattern: asyncio.create_subprocess_shell($CMD, ...)
+          - pattern-not: asyncio.create_subprocess_shell("...", ...)

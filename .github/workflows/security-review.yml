@@ -1,0 +1,50 @@
+# Reusable pull-request security review. In another repository:
+#
+#   jobs:
+#     security:
+#       uses: manojrevenkar12-web/chat-exposure-guard/.github/workflows/security-review.yml@main
+#       with: {register: security/register.yaml, fail-on: high}
+#
+# It scans only what the pull request changes, at the base and the head, and comments with the
+# findings the pull request introduces (moved or reformatted code is not new).
+name: security-review
+on:
+  workflow_call:
+    inputs:
+      register: {type: string, required: true, description: "risk register YAML in the calling repository"}
+      subdir: {type: string, default: ""}
+      fail-on: {type: string, default: high}
+  pull_request:
+    paths: ["examples/companion-platform/**"]
+permissions: {contents: read, pull-requests: write}
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/checkout@v4
+        with: {repository: manojrevenkar12-web/chat-exposure-guard, path: .ceg}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install "./.ceg[scanners]"
+      - name: review
+        env:
+          CEG_HOME: ${{ github.workspace }}/.ceg
+          REGISTER: ${{ inputs.register || 'examples/companion-platform/register.yaml' }}
+          SUBDIR: ${{ inputs.subdir || (inputs.register && '' || 'examples/companion-platform') }}
+          FAIL_ON: ${{ inputs.fail-on || 'high' }}
+        run: |
+          set +e
+          ceg review --repo . --base "origin/${{ github.base_ref }}" --head HEAD --register "$REGISTER" \
+            --subdir "$SUBDIR" --fail-on "$FAIL_ON" --out review.md
+          rc=$?
+          cat review.md >> "$GITHUB_STEP_SUMMARY"
+          [ $rc -ne 0 ] && echo "::error::the pull request introduces findings at $FAIL_ON or above"
+          echo "rc=$rc" >> "$GITHUB_ENV"
+      - name: comment
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env: {GH_TOKEN: "${{ github.token }}"}
+        run: gh pr comment "${{ github.event.pull_request.number }}" --body-file review.md --edit-last || gh pr comment "${{ github.event.pull_request.number }}" --body-file review.md
+      - run: exit $rc

@@ -1,0 +1,5 @@
+[
+  {"email": "ana.weiss@companion.example", "is_admin": true, "has_2fa": true},
+  {"email": "mia.roth@companion.example", "is_admin": false, "has_2fa": true, "deleted": false},
+  {"email": "jonas.berg@companion.example", "is_admin": false, "has_2fa": true}
+]

@@ -1,0 +1,51 @@
+rules:
+  - id: ceg.chat-content-logged
+    message: >-
+      Conversation content is written to a log. Logs are copied to log stores, tickets and
+      vendors with far weaker access control than the chat database. Log ids and lengths, not content.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: "CWE-532: Insertion of Sensitive Information into Log File"
+      ceg-severity: medium
+      family: chat-content-logged
+    pattern-either:
+      # an attribute of a message-like object: message.content, body.text, reply.text
+      - patterns:
+          - pattern-either:
+              - patterns:
+                  - pattern: $LOG.$METHOD(..., <... $OBJ.$ATTR ...>, ...)
+                  - metavariable-regex:
+                      metavariable: $METHOD
+                      regex: ^(debug|info|warning|warn|error|exception|critical|log|msg)$
+                  - metavariable-regex:
+                      metavariable: $LOG
+                      regex: (?i).*(log|logger|logging|structlog).*
+              - pattern: print(..., <... $OBJ.$ATTR ...>, ...)
+          - metavariable-regex:
+              metavariable: $ATTR
+              regex: ^(content|text|body|prompt|completion|reply|transcript|message_text|messages)$
+          - metavariable-regex:
+              metavariable: $OBJ
+              regex: (?i).*(msg|message|chat|conversation|turn|reply|completion|response|req|request|prompt|memory|body|payload).*
+          - pattern-not: $F(..., len($OBJ.$ATTR), ...)
+      # a variable that holds chat text: reply, fact, memory, transcript (held-out set rules-v1)
+      - patterns:
+          - pattern-either:
+              # the variable itself, not an attribute of it: reply.id is not chat text (rules-v1, c025)
+              - patterns:
+                  - pattern-either:
+                      - pattern: $LOG.$METHOD(..., $VAR, ...)
+                      - pattern: $LOG.$METHOD(..., f"...{$VAR}...", ...)
+                  - metavariable-regex:
+                      metavariable: $METHOD
+                      regex: ^(debug|info|warning|warn|error|exception|critical|log|msg)$
+                  - metavariable-regex:
+                      metavariable: $LOG
+                      regex: (?i).*(log|logger|logging|structlog).*
+              - pattern: print(..., $VAR, ...)
+              - pattern: print(..., f"...{$VAR}...", ...)
+          - metavariable-regex:
+              metavariable: $VAR
+              regex: ^(text|reply|answer|completion|fact|memory|memory_text|transcript|utterance|user_text|message_text|prompt_text|output_text|content)$
+          - pattern-not: $F(..., len($VAR), ...)

@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function conversationOwner(conversationId) {
+      return get(/databases/$(database)/documents/conversations/$(conversationId)).data.ownerUid;
+    }
+
+    match /conversations/{conversationId} {
+      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid;
+      allow read, update, delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+
+      match /messages/{messageId} {
+        allow read: if true;
+        allow create: if request.auth != null && conversationOwner(conversationId) == request.auth.uid;
+      }
+    }
+  }
+}

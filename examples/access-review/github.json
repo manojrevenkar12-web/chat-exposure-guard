@@ -1,0 +1,9 @@
+[
+  {"login": "anaw", "role": "admin", "two_factor": true, "last_active": "2026-10-19"},
+  {"login": "jberg", "role": "member", "two_factor": true, "last_active": "2026-10-18"},
+  {"login": "miar", "role": "member", "two_factor": true, "last_active": "2026-10-02"},
+  {"login": "lhahn-ext", "role": "member", "two_factor": true, "outside_collaborator": true, "permission": "admin", "repo": "chat-api"},
+  {"login": "sara-l", "role": "admin", "two_factor": false, "last_active": "2026-07-01"},
+  {"login": "deploy-bot", "role": "member", "two_factor": false},
+  {"login": "old-intern-2024", "role": "member", "two_factor": true}
+]

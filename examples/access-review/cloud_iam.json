@@ -1,0 +1,8 @@
+[
+  {"user": "anaw", "policies": ["AdministratorAccess"], "mfa": true, "last_login": "2026-10-17",
+   "access_keys": [{"id": "AKIATESTKEY0000A1B2", "created": "2026-01-10", "last_used": "2026-10-15", "active": true}]},
+  {"user": "ci-terraform", "policies": ["AdministratorAccess"], "mfa": false,
+   "access_keys": [{"id": "AKIATESTKEY0000C3D4", "created": "2026-09-01", "last_used": "2026-10-19", "active": true}]},
+  {"user": "jberg", "policies": ["ReadOnlyAccess"], "mfa": true,
+   "access_keys": [{"id": "AKIATESTKEY0000E5F6", "created": "2026-09-30", "last_used": "2026-10-10", "active": true}]}
+]

@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "presence": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "users": {
+      "$uid": {
+        "conversations": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    },
+    "characters": {
+      "$characterId": {
+        ".read": true,
+        ".write": false
+      }
+    }
+  }
+}

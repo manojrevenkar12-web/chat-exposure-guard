@@ -1,0 +1,16 @@
+{
+  "service": "chat-api",
+  "llm": {
+    "provider": "openai",
+    "model": "gpt-4.1-mini",
+    "api_key": "${OPENAI_API_KEY}"
+  },
+  "moderation": {
+    "endpoint": "https://moderation.internal.lumachat.example.com",
+    "api_token": "${MODERATION_TOKEN}"
+  },
+  "analytics": {
+    "enabled": false,
+    "write_key": "your-key-here"
+  }
+}

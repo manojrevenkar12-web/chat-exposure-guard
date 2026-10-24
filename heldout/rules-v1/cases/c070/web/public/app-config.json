@@ -1,0 +1,12 @@
+{
+  "apiBaseUrl": "https://api.lumachat.example.com",
+  "features": {
+    "voiceNotes": true,
+    "imageReplies": false
+  },
+  "llm": {
+    "provider": "anthropic",
+    "model": "claude-haiku-4-5",
+    "apiToken": "Q7mX2pL9vR4tK8wN3bZ6cF1hJ5dS"
+  }
+}

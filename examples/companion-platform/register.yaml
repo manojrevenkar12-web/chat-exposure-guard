@@ -1,0 +1,98 @@
+# Risk register for the example platform. Paths are relative to this directory.
+owners: [platform-team, ml-team, web-team, data-team, payments-team]
+
+services:
+  - name: chat-api
+    owner: platform-team
+    description: Public API for conversations, characters and memories.
+    exposure: internet
+    auth: session
+    data: [chat_content, pii, model_prompts]
+    paths: ["services/chat-api/*", "services/chat-api/**", "infra/k8s/chat-api.yaml"]
+    ai_providers: [anthropic]
+    last_pentest: "2026-03-14"
+    datastores:
+      - name: chat-db
+        engine: postgres
+        data: [chat_content, pii]
+      - name: session-cache
+        engine: redis
+        data: [credentials, chat_content]
+        config_paths: ["infra/redis/*"]
+      - name: chat-events
+        engine: kafka
+        data: [chat_content]
+        config_paths: ["infra/kafka/*", "infra/k8s/kafka.yaml"]
+        resources: [aws_msk_cluster.events]
+
+  - name: media-service
+    owner: platform-team
+    description: Generates, stores and shares images and video.
+    exposure: internet
+    auth: session
+    data: [nsfw_media, pii]
+    paths: ["services/media-service/**", "services/media-service/*"]
+    datastores:
+      - name: media-bucket
+        engine: s3
+        data: [nsfw_media]
+        resources: [aws_s3_bucket.media, aws_s3_bucket_public_access_block.media, aws_s3_bucket_policy.media_previews]
+
+  - name: memory-worker
+    owner: ml-team
+    description: Turns conversations into long-term memories.
+    exposure: internal
+    auth: mtls
+    data: [chat_content]
+    paths: ["services/memory-worker/*"]
+
+  - name: mobile-app
+    owner: web-team
+    description: iOS and Android app. Everything in it is public.
+    exposure: internet
+    auth: client
+    data: [pii]
+    paths: ["mobile/*", "mobile/**"]
+
+  - name: web-client
+    owner: web-team
+    description: Browser app.
+    exposure: internet
+    auth: client
+    data: [chat_content]
+    paths: ["web/**", "web/*"]
+
+  - name: realtime
+    owner: platform-team
+    description: Firebase presence and conversation sync.
+    exposure: internet
+    auth: session
+    data: [chat_content]
+    paths: []
+    datastores:
+      - name: firebase
+        engine: firebase
+        data: [chat_content]
+        config_paths: ["infra/firebase/*"]
+        public_paths: ["/characters/*"]  # public character cards, reviewed 2026-09
+
+  - name: search
+    owner: data-team
+    description: Search over characters (public data only).
+    exposure: internal
+    auth: none
+    data: [public]
+    paths: []
+    datastores:
+      - name: search-cluster
+        engine: elasticsearch
+        data: [public]
+        resources: [aws_security_group.search]
+
+  - name: analytics
+    owner: data-team
+    description: Nightly product analytics export, no message content.
+    exposure: offline
+    auth: none
+    data: [telemetry]
+    paths: ["jobs/analytics/*"]

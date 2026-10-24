@@ -1,0 +1,913 @@
+{
+  "set": "rules-v1",
+  "kind": "rules",
+  "status": "held-out",
+  "cases": 80,
+  "weaknesses": 58,
+  "found": 40,
+  "missed": 18,
+  "false_alarms": 21,
+  "recall": 0.69,
+  "precision": 0.656,
+  "safe_cases": 26,
+  "safe_cases_clean": 19,
+  "per_category": {
+    "bandit:B310": {
+      "tp": 0,
+      "fn": 0,
+      "fp": 1
+    },
+    "bandit:B323": {
+      "tp": 0,
+      "fn": 0,
+      "fp": 1
+    },
+    "bandit:B403": {
+      "tp": 0,
+      "fn": 0,
+      "fp": 1
+    },
+    "bandit:B404": {
+      "tp": 0,
+      "fn": 0,
+      "fp": 2
+    },
+    "bandit:B603": {
+      "tp": 0,
+      "fn": 0,
+      "fp": 1
+    },
+    "bandit:B607": {
+      "tp": 0,
+      "fn": 0,
+      "fp": 2
+    },
+    "broker-without-auth": {
+      "tp": 4,
+      "fn": 1,
+      "fp": 0
+    },
+    "bucket-public": {
+      "tp": 3,
+      "fn": 1,
+      "fp": 0
+    },
+    "chat-content-logged": {
+      "tp": 0,
+      "fn": 3,
+      "fp": 0
+    },
+    "chat-idor": {
+      "tp": 2,
+      "fn": 1,
+      "fp": 0
+    },
+    "command-injection": {
+      "tp": 2,
+      "fn": 1,
+      "fp": 2
+    },
+    "cors-credentials-wildcard": {
+      "tp": 1,
+      "fn": 2,
+      "fp": 0
+    },
+    "database-rules-public": {
+      "tp": 2,
+      "fn": 1,
+      "fp": 3
+    },
+    "datastore-exposed": {
+      "tp": 4,
+      "fn": 0,
+      "fp": 0
+    },
+    "hardcoded-credential": {
+      "tp": 3,
+      "fn": 2,
+      "fp": 0
+    },
+    "jwt-unverified": {
+      "tp": 1,
+      "fn": 2,
+      "fp": 0
+    },
+    "long-lived-media-url": {
+      "tp": 3,
+      "fn": 0,
+      "fp": 1
+    },
+    "markdown-image-exfiltration": {
+      "tp": 1,
+      "fn": 2,
+      "fp": 1
+    },
+    "model-output-as-html": {
+      "tp": 2,
+      "fn": 1,
+      "fp": 0
+    },
+    "sqli": {
+      "tp": 3,
+      "fn": 0,
+      "fp": 0
+    },
+    "tls-verification-off": {
+      "tp": 2,
+      "fn": 1,
+      "fp": 1
+    },
+    "unsafe-deserialization": {
+      "tp": 4,
+      "fn": 0,
+      "fp": 4
+    },
+    "untrusted-text-in-system-prompt": {
+      "tp": 3,
+      "fn": 0,
+      "fp": 1
+    }
+  },
+  "case_results": [
+    {
+      "id": "c001",
+      "expect": [
+        "chat-idor"
+      ],
+      "found": [
+        "chat-idor"
+      ],
+      "ok": true,
+      "note": "GET /conversations/{id} loads with db.get and returns it; signed-in user never compared with owner"
+    },
+    {
+      "id": "c002",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "messages listed only after the conversation is selected with user_id == current user"
+    },
+    {
+      "id": "c003",
+      "expect": [
+        "chat-content-logged"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "logger.info writes the incoming message text (body.text)"
+    },
+    {
+      "id": "c004",
+      "expect": [
+        "sqli"
+      ],
+      "found": [
+        "sqli"
+      ],
+      "ok": true,
+      "note": "search term q interpolated into text() via f-string (user id is bound, q is not)"
+    },
+    {
+      "id": "c005",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "psycopg2 query with %s placeholders and a parameter tuple; logs only counts"
+    },
+    {
+      "id": "c006",
+      "expect": [
+        "command-injection"
+      ],
+      "found": [
+        "bandit:B404",
+        "command-injection",
+        "command-injection"
+      ],
+      "ok": false,
+      "note": "ffmpeg command f-string with the uploaded filename run with shell=True"
+    },
+    {
+      "id": "c007",
+      "expect": [
+        "tls-verification-off"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "requests.Session with session.verify = False"
+    },
+    {
+      "id": "c008",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "verify= points at an internal CA bundle for both requests and httpx"
+    },
+    {
+      "id": "c009",
+      "expect": [
+        "unsafe-deserialization"
+      ],
+      "found": [
+        "bandit:B403",
+        "unsafe-deserialization",
+        "unsafe-deserialization"
+      ],
+      "ok": false,
+      "note": "chat session cache read back from Redis with pickle.loads"
+    },
+    {
+      "id": "c010",
+      "expect": [
+        "jwt-unverified"
+      ],
+      "found": [
+        "jwt-unverified"
+      ],
+      "ok": true,
+      "note": "jwt.decode with options verify_signature False in the auth dependency"
+    },
+    {
+      "id": "c011",
+      "expect": [
+        "untrusted-text-in-system-prompt"
+      ],
+      "found": [
+        "untrusted-text-in-system-prompt"
+      ],
+      "ok": true,
+      "note": "community character name/description/greeting (creator-written) formatted into system="
+    },
+    {
+      "id": "c012",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "memories go into a user turn; system prompt is a constant"
+    },
+    {
+      "id": "c013",
+      "expect": [
+        "broker-without-auth"
+      ],
+      "found": [
+        "broker-without-auth"
+      ],
+      "ok": true,
+      "note": "KafkaProducer with no security_protocol/SASL (PLAINTEXT default)"
+    },
+    {
+      "id": "c014",
+      "expect": [
+        "long-lived-media-url"
+      ],
+      "found": [
+        "long-lived-media-url"
+      ],
+      "ok": true,
+      "note": "presigned GET for a private attachment with ExpiresIn of 7 days"
+    },
+    {
+      "id": "c015",
+      "expect": [
+        "cors-credentials-wildcard"
+      ],
+      "found": [
+        "cors-credentials-wildcard"
+      ],
+      "ok": true,
+      "note": "CORSMiddleware allow_origins=['*'] with allow_credentials=True"
+    },
+    {
+      "id": "c016",
+      "expect": [
+        "model-output-as-html"
+      ],
+      "found": [
+        "model-output-as-html"
+      ],
+      "ok": true,
+      "note": "message.text (user and assistant turns) rendered with dangerouslySetInnerHTML"
+    },
+    {
+      "id": "c017",
+      "expect": [
+        "markdown-image-exfiltration"
+      ],
+      "found": [
+        "markdown-image-exfiltration"
+      ],
+      "ok": true,
+      "note": "ReactMarkdown with default settings renders model replies, images from any host load"
+    },
+    {
+      "id": "c018",
+      "expect": [
+        "hardcoded-credential"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "google_client_secret default is a literal high-entropy secret"
+    },
+    {
+      "id": "c019",
+      "expect": [
+        "datastore-exposed"
+      ],
+      "found": [
+        "datastore-exposed"
+      ],
+      "ok": true,
+      "note": "Redis Service of type LoadBalancer on 6379, no internal annotation or source ranges"
+    },
+    {
+      "id": "c020",
+      "expect": [
+        "database-rules-public"
+      ],
+      "found": [
+        "database-rules-public",
+        "database-rules-public"
+      ],
+      "ok": false,
+      "note": "RTDB users/$uid/conversations readable by any signed-in user (public character node is fine)"
+    },
+    {
+      "id": "c021",
+      "expect": [
+        "bucket-public",
+        "bucket-public"
+      ],
+      "found": [
+        "bucket-public"
+      ],
+      "ok": false,
+      "note": "uploads bucket: public access block all false, and a bucket policy granting Principal * s3:GetObject"
+    },
+    {
+      "id": "c022",
+      "expect": [],
+      "found": [
+        "database-rules-public"
+      ],
+      "ok": false,
+      "note": "RTDB: user subtree owner-only; published characters public read with creator-only writes"
+    },
+    {
+      "id": "c023",
+      "expect": [
+        "chat-idor"
+      ],
+      "found": [
+        "chat-idor"
+      ],
+      "ok": true,
+      "note": "async PATCH /memories/{id} uses session.get and edits without comparing owner"
+    },
+    {
+      "id": "c024",
+      "expect": [
+        "chat-content-logged"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "log.debug writes each extracted memory text"
+    },
+    {
+      "id": "c025",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "telemetry logs ids, character lengths, token counts and stop reasons only"
+    },
+    {
+      "id": "c026",
+      "expect": [
+        "sqli"
+      ],
+      "found": [
+        "sqli"
+      ],
+      "ok": true,
+      "note": "export script builds the user lookup with '%s' % email (second query is parameterised)"
+    },
+    {
+      "id": "c027",
+      "expect": [
+        "command-injection"
+      ],
+      "found": [
+        "command-injection"
+      ],
+      "ok": true,
+      "note": "os.system with clamscan + concatenated path built from the upload filename"
+    },
+    {
+      "id": "c028",
+      "expect": [],
+      "found": [
+        "bandit:B404",
+        "bandit:B603",
+        "bandit:B607",
+        "bandit:B607",
+        "command-injection"
+      ],
+      "ok": false,
+      "note": "ffmpeg run with an argument list (no shell); the shell=True call is a constant string"
+    },
+    {
+      "id": "c029",
+      "expect": [
+        "tls-verification-off"
+      ],
+      "found": [
+        "tls-verification-off",
+        "tls-verification-off"
+      ],
+      "ok": false,
+      "note": "httpx.AsyncClient(verify=False) for link previews"
+    },
+    {
+      "id": "c030",
+      "expect": [
+        "unsafe-deserialization",
+        "unsafe-deserialization"
+      ],
+      "found": [
+        "unsafe-deserialization",
+        "unsafe-deserialization",
+        "unsafe-deserialization"
+      ],
+      "ok": false,
+      "note": "from_pretrained(..., trust_remote_code=True) and torch.load without weights_only"
+    },
+    {
+      "id": "c031",
+      "expect": [
+        "jwt-unverified"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "websocket auth accepts algorithms ['HS256', 'none']"
+    },
+    {
+      "id": "c032",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "get_unverified_header only picks the kid; token then verified with RS256, audience and issuer"
+    },
+    {
+      "id": "c033",
+      "expect": [
+        "untrusted-text-in-system-prompt"
+      ],
+      "found": [
+        "untrusted-text-in-system-prompt"
+      ],
+      "ok": true,
+      "note": "stored memories and the user's profile bio joined into the OpenAI system message"
+    },
+    {
+      "id": "c034",
+      "expect": [
+        "broker-without-auth"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "redis.Redis to a cluster host with no password and no TLS"
+    },
+    {
+      "id": "c035",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "KafkaConsumer with SASL_SSL/SCRAM, credentials from env, CA file; logs ids and offsets"
+    },
+    {
+      "id": "c036",
+      "expect": [
+        "long-lived-media-url"
+      ],
+      "found": [
+        "long-lived-media-url"
+      ],
+      "ok": true,
+      "note": "GCS v4 signed URL for private voice notes with expiration=timedelta(days=30)"
+    },
+    {
+      "id": "c037",
+      "expect": [
+        "cors-credentials-wildcard"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "custom middleware reflects any Origin with Access-Control-Allow-Credentials: true"
+    },
+    {
+      "id": "c038",
+      "expect": [
+        "model-output-as-html"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "streamed reply deltas appended to bubble.innerHTML"
+    },
+    {
+      "id": "c039",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "marked output sanitised with DOMPurify using an explicit tag allowlist without img"
+    },
+    {
+      "id": "c040",
+      "expect": [
+        "markdown-image-exfiltration"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "markdown-it + default DOMPurify: HTML is sanitised but <img> from any host survives"
+    },
+    {
+      "id": "c041",
+      "expect": [
+        "hardcoded-credential"
+      ],
+      "found": [
+        "hardcoded-credential"
+      ],
+      "ok": true,
+      "note": "OpenAI SDK client created in browser code with dangerouslyAllowBrowser: true"
+    },
+    {
+      "id": "c042",
+      "expect": [
+        "datastore-exposed"
+      ],
+      "found": [
+        "datastore-exposed"
+      ],
+      "ok": true,
+      "note": "security group opens 5432 to 0.0.0.0/0 (egress to anywhere is normal)"
+    },
+    {
+      "id": "c043",
+      "expect": [
+        "database-rules-public"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "Firestore users/{uid}/memories allows read, write to any signed-in user"
+    },
+    {
+      "id": "c044",
+      "expect": [
+        "bucket-public"
+      ],
+      "found": [
+        "bucket-public"
+      ],
+      "ok": true,
+      "note": "GCS chat images bucket bound to allUsers as objectViewer"
+    },
+    {
+      "id": "c045",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "S3 public access block all true; policy grants only the CloudFront service with a SourceArn condition"
+    },
+    {
+      "id": "c046",
+      "expect": [
+        "chat-idor"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "class-based (cbv) router: DELETE /uploads/{id} filters only by id, deletes object and row"
+    },
+    {
+      "id": "c047",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "PUT /characters/{id} goes through get_owned_or_404; public lookup filters on is_published"
+    },
+    {
+      "id": "c048",
+      "expect": [
+        "chat-content-logged"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "print() of the model reply text behind a debug flag"
+    },
+    {
+      "id": "c049",
+      "expect": [
+        "sqli"
+      ],
+      "found": [
+        "sqli"
+      ],
+      "ok": true,
+      "note": "bulk delete SQL built with str.format from request ids and run with exec_driver_sql"
+    },
+    {
+      "id": "c050",
+      "expect": [
+        "command-injection"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "asyncio.create_subprocess_shell with sox and a path taken from the job payload"
+    },
+    {
+      "id": "c051",
+      "expect": [
+        "tls-verification-off"
+      ],
+      "found": [
+        "bandit:B310",
+        "bandit:B323",
+        "tls-verification-off"
+      ],
+      "ok": false,
+      "note": "urllib urlopen with ssl._create_unverified_context()"
+    },
+    {
+      "id": "c052",
+      "expect": [],
+      "found": [
+        "unsafe-deserialization",
+        "unsafe-deserialization"
+      ],
+      "ok": false,
+      "note": "yaml.safe_load / SafeLoader, torch.load(weights_only=True), from_pretrained without remote code"
+    },
+    {
+      "id": "c053",
+      "expect": [
+        "unsafe-deserialization"
+      ],
+      "found": [
+        "unsafe-deserialization"
+      ],
+      "ok": true,
+      "note": "uploaded character pack parsed with yaml.load(..., Loader=yaml.Loader)"
+    },
+    {
+      "id": "c054",
+      "expect": [
+        "jwt-unverified"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "options dict with verify_signature False kept in a module constant and passed to jwt.decode"
+    },
+    {
+      "id": "c055",
+      "expect": [
+        "untrusted-text-in-system-prompt"
+      ],
+      "found": [
+        "untrusted-text-in-system-prompt"
+      ],
+      "ok": true,
+      "note": "fetched web page text placed in a system block (list form with cache_control)"
+    },
+    {
+      "id": "c056",
+      "expect": [],
+      "found": [
+        "untrusted-text-in-system-prompt"
+      ],
+      "ok": false,
+      "note": "system prompt chosen from a constant persona dict; user text only in the messages list"
+    },
+    {
+      "id": "c057",
+      "expect": [
+        "broker-without-auth"
+      ],
+      "found": [
+        "broker-without-auth"
+      ],
+      "ok": true,
+      "note": "Kafka server.properties: PLAINTEXT listener on 0.0.0.0"
+    },
+    {
+      "id": "c058",
+      "expect": [
+        "broker-without-auth"
+      ],
+      "found": [
+        "broker-without-auth"
+      ],
+      "ok": true,
+      "note": "redis.conf binds 0.0.0.0 with protected-mode no and no requirepass"
+    },
+    {
+      "id": "c059",
+      "expect": [
+        "broker-without-auth"
+      ],
+      "found": [
+        "broker-without-auth"
+      ],
+      "ok": true,
+      "note": "aws_msk_cluster client_authentication unauthenticated = true"
+    },
+    {
+      "id": "c060",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "sidecar redis.conf bound to loopback only with protected-mode yes"
+    },
+    {
+      "id": "c061",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "Kafka broker with only a SASL_SSL listener; secrets come from a FileConfigProvider"
+    },
+    {
+      "id": "c062",
+      "expect": [
+        "long-lived-media-url"
+      ],
+      "found": [
+        "long-lived-media-url"
+      ],
+      "ok": true,
+      "note": "chat export image links presigned with ExpiresIn=MEDIA_URL_TTL (48 hours)"
+    },
+    {
+      "id": "c063",
+      "expect": [],
+      "found": [
+        "long-lived-media-url"
+      ],
+      "ok": false,
+      "note": "presigned POST 5 min, presigned GET 15 min, GCS signed URL exactly 24 hours"
+    },
+    {
+      "id": "c064",
+      "expect": [
+        "cors-credentials-wildcard"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "ingress-nginx annotations: cors-allow-origin '*' with cors-allow-credentials 'true'"
+    },
+    {
+      "id": "c065",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "public catalog uses allow_origins ['*'] without credentials; main API uses an explicit origin list with credentials"
+    },
+    {
+      "id": "c066",
+      "expect": [
+        "model-output-as-html"
+      ],
+      "found": [
+        "model-output-as-html"
+      ],
+      "ok": true,
+      "note": "model-extracted memory text turned into HTML by a regex helper and set with dangerouslySetInnerHTML"
+    },
+    {
+      "id": "c067",
+      "expect": [
+        "markdown-image-exfiltration"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "react-markdown with custom code/a components but default img handling"
+    },
+    {
+      "id": "c068",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "react-markdown with disallowedElements ['img'] and skipHtml"
+    },
+    {
+      "id": "c069",
+      "expect": [],
+      "found": [
+        "markdown-image-exfiltration"
+      ],
+      "ok": false,
+      "note": "img component renders only https images from the platform's own media hosts"
+    },
+    {
+      "id": "c070",
+      "expect": [
+        "hardcoded-credential",
+        "hardcoded-credential"
+      ],
+      "found": [
+        "hardcoded-credential"
+      ],
+      "ok": false,
+      "note": "bundled app-config.json holds a literal llm apiToken, and the Anthropic SDK is created in browser code"
+    },
+    {
+      "id": "c071",
+      "expect": [
+        "datastore-exposed",
+        "hardcoded-credential"
+      ],
+      "found": [
+        "datastore-exposed",
+        "hardcoded-credential"
+      ],
+      "ok": true,
+      "note": "RDS instance with a literal password and publicly_accessible = true"
+    },
+    {
+      "id": "c072",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "Deployment reads every secret through secretKeyRef; Service is ClusterIP for the API"
+    },
+    {
+      "id": "c073",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "app config JSON uses ${ENV} references and a your-key-here placeholder; loader expands env vars"
+    },
+    {
+      "id": "c074",
+      "expect": [
+        "datastore-exposed"
+      ],
+      "found": [
+        "datastore-exposed"
+      ],
+      "ok": true,
+      "note": "postgres-external Service of type NodePort on 5432 (the ClusterIP service beside it is fine)"
+    },
+    {
+      "id": "c075",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "Kafka LoadBalancer Service carries the internal load balancer annotations"
+    },
+    {
+      "id": "c076",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "only 80/443 open to the internet on the ALB; Redis and Postgres only from the VPC / app security group"
+    },
+    {
+      "id": "c077",
+      "expect": [
+        "database-rules-public"
+      ],
+      "found": [
+        "database-rules-public"
+      ],
+      "ok": true,
+      "note": "Firestore conversations/{id}/messages has allow read: if true"
+    },
+    {
+      "id": "c078",
+      "expect": [],
+      "found": [
+        "database-rules-public"
+      ],
+      "ok": false,
+      "note": "Firestore: published characters world-readable (meant to be public); everything under users/{uid} owner-only"
+    },
+    {
+      "id": "c079",
+      "expect": [
+        "bucket-public"
+      ],
+      "found": [
+        "bucket-public"
+      ],
+      "ok": true,
+      "note": "chat exports bucket ACL set to public-read"
+    },
+    {
+      "id": "c080",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "GCS voice notes bucket with public_access_prevention enforced; bindings to a service account and a group"
+    }
+  ],
+  "skipped": [],
+  "at": "2026-10-24T13:24:10+00:00"
+}

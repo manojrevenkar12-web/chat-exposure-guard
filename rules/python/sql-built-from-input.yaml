@@ -1,0 +1,29 @@
+rules:
+  - id: ceg.sql-built-from-input
+    message: >-
+      SQL is built by string formatting. If any part comes from a request, a user can rewrite the
+      query, for example to read every user's conversations. Use bound parameters.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command"
+      ceg-severity: high
+      family: sqli
+    pattern-either:
+      - pattern: $CUR.execute(f"...", ...)
+      - pattern: $CUR.execute("..." % $X, ...)
+      - pattern: $CUR.execute("..." + $X, ...)
+      - pattern: $CUR.execute("...".format(...), ...)
+      - pattern: $DB.execute(text(f"..."), ...)
+      - pattern: $DB.execute(text("..." + $X), ...)
+      - pattern: $DB.execute(text("...".format(...)), ...)
+      - patterns:
+          - pattern-inside: |
+              $Q = f"..."
+              ...
+          - pattern: $CUR.execute($Q, ...)
+      - patterns:
+          - pattern-inside: |
+              $Q = "..." + $X
+              ...
+          - pattern: $CUR.execute($Q, ...)

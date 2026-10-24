@@ -1,0 +1,28 @@
+rules:
+  - id: ceg.long-lived-presigned-url
+    message: >-
+      A signed media URL stays valid for $N seconds. Signed URLs are shared, cached and logged; an
+      intimate image link that works for days is a leak waiting to be forwarded. Keep them to minutes
+      and sign on each view.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: "CWE-613: Insufficient Session Expiration"
+      ceg-severity: medium
+      family: long-lived-media-url
+    pattern-either:
+      - patterns:
+          - pattern: $S3.generate_presigned_url(..., ExpiresIn=$N, ...)
+          - metavariable-comparison:
+              metavariable: $N
+              comparison: $N > 86400
+      - patterns:
+          - pattern: $BLOB.generate_signed_url(..., expiration=timedelta(..., days=$D, ...), ...)
+          - metavariable-comparison:
+              metavariable: $D
+              comparison: $D > 1
+      - patterns:
+          - pattern: $BLOB.generate_signed_url(..., expiration=timedelta(..., hours=$H, ...), ...)
+          - metavariable-comparison:
+              metavariable: $H
+              comparison: $H > 24

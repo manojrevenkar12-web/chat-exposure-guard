@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /memories/{memoryId} {
+        allow read, write: if signedIn();
+      }
+    }
+
+    match /characters/{characterId} {
+      allow read: if resource.data.visibility == "public" || isOwner(resource.data.creatorUid);
+      allow create: if isOwner(request.resource.data.creatorUid);
+      allow update, delete: if isOwner(resource.data.creatorUid);
+    }
+  }
+}

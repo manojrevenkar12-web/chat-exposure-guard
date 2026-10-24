@@ -1,0 +1,42 @@
+rules:
+  - id: ceg.model-output-rendered-as-html
+    message: >-
+      Model or chat output ($MSG) is inserted as raw HTML. A prompt injection (from a shared character,
+      a stored memory, a fetched page) becomes script in the user's session: it can read the
+      conversation and the session token. Render text, or sanitise with DOMPurify first.
+    severity: ERROR
+    languages: [typescript, javascript]
+    metadata:
+      cwe: "CWE-79: Improper Neutralization of Input During Web Page Generation"
+      owasp-llm: "LLM05:2025 Improper Output Handling"
+      ceg-severity: high
+      family: model-output-as-html
+    patterns:
+      - pattern-either:
+          - pattern: |
+              <$EL dangerouslySetInnerHTML={{__html: <... $MSG ...>}} />
+          - pattern: |
+              <$EL dangerouslySetInnerHTML={{__html: <... $MSG ...>}}>...</$EL>
+          - pattern: $NODE.innerHTML = <... $MSG ...>
+          - pattern: $NODE.innerHTML += <... $MSG ...>
+          - pattern: $NODE.insertAdjacentHTML($POS, <... $MSG ...>)
+          - pattern: <ReactMarkdown ... rehypePlugins={[..., rehypeRaw, ...]} ...>...</ReactMarkdown>
+      - metavariable-regex:
+          metavariable: $MSG
+          regex: (?i).*(message|reply|completion|content|response|output|text|markdown|chunk|delta|answer|html).*
+      - pattern-not: |
+          <$EL dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(...)}} />
+      - pattern-not: |
+          <$EL dangerouslySetInnerHTML={{__html: sanitize(...)}} />
+      - pattern-not: $NODE.innerHTML = DOMPurify.sanitize(...)
+      - pattern-not: $NODE.innerHTML = sanitize(...)
+      # a variable that was sanitised where it was made
+      - pattern-not-inside: |
+          const $MSG = DOMPurify.sanitize(...);
+          ...
+      - pattern-not-inside: |
+          const $MSG = sanitize(...);
+          ...
+      - pattern-not-inside: |
+          const $MSG = useMemo(() => DOMPurify.sanitize(...), ...);
+          ...
