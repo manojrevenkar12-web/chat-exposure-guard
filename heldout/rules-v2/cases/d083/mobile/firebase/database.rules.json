@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "publicCharacters": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "conversations": {
+      "$conversationId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "uploads": {
+      "$uid": {
+        ".read": true,
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+  }
+}

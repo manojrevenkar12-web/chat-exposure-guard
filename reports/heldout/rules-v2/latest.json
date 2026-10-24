@@ -1,0 +1,979 @@
+{
+  "set": "rules-v2",
+  "kind": "rules",
+  "status": "held-out",
+  "cases": 90,
+  "weaknesses": 81,
+  "found": 55,
+  "missed": 26,
+  "false_alarms": 5,
+  "recall": 0.679,
+  "precision": 0.917,
+  "safe_cases": 30,
+  "safe_cases_clean": 29,
+  "per_category": {
+    "broker-without-auth": {
+      "tp": 6,
+      "fn": 1,
+      "fp": 0
+    },
+    "bucket-public": {
+      "tp": 5,
+      "fn": 0,
+      "fp": 0
+    },
+    "chat-content-logged": {
+      "tp": 0,
+      "fn": 4,
+      "fp": 0
+    },
+    "chat-idor": {
+      "tp": 1,
+      "fn": 4,
+      "fp": 0
+    },
+    "command-injection": {
+      "tp": 4,
+      "fn": 0,
+      "fp": 0
+    },
+    "cors-credentials-wildcard": {
+      "tp": 1,
+      "fn": 4,
+      "fp": 0
+    },
+    "database-rules-public": {
+      "tp": 4,
+      "fn": 1,
+      "fp": 2
+    },
+    "datastore-exposed": {
+      "tp": 4,
+      "fn": 1,
+      "fp": 0
+    },
+    "hardcoded-credential": {
+      "tp": 4,
+      "fn": 1,
+      "fp": 1
+    },
+    "jwt-unverified": {
+      "tp": 4,
+      "fn": 0,
+      "fp": 0
+    },
+    "long-lived-media-url": {
+      "tp": 2,
+      "fn": 2,
+      "fp": 0
+    },
+    "markdown-image-exfiltration": {
+      "tp": 1,
+      "fn": 4,
+      "fp": 0
+    },
+    "model-output-as-html": {
+      "tp": 3,
+      "fn": 2,
+      "fp": 1
+    },
+    "sqli": {
+      "tp": 4,
+      "fn": 0,
+      "fp": 0
+    },
+    "tls-verification-off": {
+      "tp": 4,
+      "fn": 0,
+      "fp": 1
+    },
+    "unsafe-deserialization": {
+      "tp": 5,
+      "fn": 0,
+      "fp": 0
+    },
+    "untrusted-text-in-system-prompt": {
+      "tp": 3,
+      "fn": 2,
+      "fp": 0
+    }
+  },
+  "case_results": [
+    {
+      "id": "d001",
+      "expect": [
+        "chat-content-logged",
+        "chat-idor"
+      ],
+      "found": [
+        "chat-idor"
+      ],
+      "ok": false,
+      "note": "GET /conversations/{id} loads by id with db.get and never compares user_id; logs the last message text"
+    },
+    {
+      "id": "d002",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "messages listed only after filtering the conversation by id and user_id; log has ids and a count"
+    },
+    {
+      "id": "d003",
+      "expect": [
+        "chat-idor"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "Flask DELETE /api/memories/<id> uses get_or_404 and deletes without comparing owner (GET in same file does check)"
+    },
+    {
+      "id": "d004",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "Flask PATCH memory compares owner_id with current_user before editing"
+    },
+    {
+      "id": "d005",
+      "expect": [
+        "chat-idor"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "Django CharacterDetailView.patch loads Character by pk and saves edits without an owner check (get is scoped)"
+    },
+    {
+      "id": "d006",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "Django upload download/delete use get_object_or_404 with owner=request.user"
+    },
+    {
+      "id": "d007",
+      "expect": [
+        "chat-idor"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "aiohttp GET /uploads/{id} fetches the row by id via asyncpg and streams it without comparing owner_id to request user"
+    },
+    {
+      "id": "d008",
+      "expect": [
+        "chat-idor"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "MessageRoutes.edit uses repo.get(message_id) (no user filter) while remove uses get_for_user"
+    },
+    {
+      "id": "d009",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "character routes go through get_owned_character, which filters by owner and raises 404"
+    },
+    {
+      "id": "d010",
+      "expect": [
+        "chat-content-logged",
+        "untrusted-text-in-system-prompt"
+      ],
+      "found": [
+        "untrusted-text-in-system-prompt"
+      ],
+      "ok": false,
+      "note": "reply worker puts the user's profile bio into the second system block and prints the reply text"
+    },
+    {
+      "id": "d011",
+      "expect": [
+        "broker-without-auth",
+        "broker-without-auth",
+        "chat-content-logged"
+      ],
+      "found": [
+        "broker-without-auth",
+        "broker-without-auth"
+      ],
+      "ok": false,
+      "note": "kafka-python KafkaConsumer and KafkaProducer both connect with only bootstrap_servers (no SASL/SSL); flagged message text logged with warning()"
+    },
+    {
+      "id": "d012",
+      "expect": [
+        "chat-content-logged",
+        "untrusted-text-in-system-prompt"
+      ],
+      "found": [
+        "untrusted-text-in-system-prompt"
+      ],
+      "ok": false,
+      "note": "stored memories joined into the OpenAI system message; structlog debug logs each memory's text"
+    },
+    {
+      "id": "d013",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "logs conversation id, character counts, token usage and memory counts only"
+    },
+    {
+      "id": "d014",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "logged 'message' variable is a rate-limit status string; message text is only measured"
+    },
+    {
+      "id": "d015",
+      "expect": [
+        "untrusted-text-in-system-prompt"
+      ],
+      "found": [
+        "untrusted-text-in-system-prompt"
+      ],
+      "ok": true,
+      "note": "community character's creator-written description and greeting interpolated into the system prompt"
+    },
+    {
+      "id": "d016",
+      "expect": [
+        "untrusted-text-in-system-prompt"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "PromptBuilder.build_instructions formats profile bio and interests into Responses API instructions"
+    },
+    {
+      "id": "d017",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "system prompt is a constant; retrieved memories are passed inside the user turn, not the system prompt"
+    },
+    {
+      "id": "d018",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "system prompt chosen from a constant PERSONAS dict plus today's date; user text only in messages"
+    },
+    {
+      "id": "d019",
+      "expect": [
+        "tls-verification-off",
+        "untrusted-text-in-system-prompt"
+      ],
+      "found": [
+        "tls-verification-off"
+      ],
+      "ok": false,
+      "note": "link summariser fetches the page with ssl._create_unverified_context and puts page text into the system prompt"
+    },
+    {
+      "id": "d020",
+      "expect": [
+        "sqli"
+      ],
+      "found": [
+        "sqli"
+      ],
+      "ok": true,
+      "note": "SQLAlchemy Core text() built by concatenating sort and direction query parameters"
+    },
+    {
+      "id": "d021",
+      "expect": [
+        "sqli"
+      ],
+      "found": [
+        "sqli"
+      ],
+      "ok": true,
+      "note": "asyncpg DELETE assembled with str.format from user_id and a topic from the request"
+    },
+    {
+      "id": "d022",
+      "expect": [
+        "sqli"
+      ],
+      "found": [
+        "sqli"
+      ],
+      "ok": true,
+      "note": "Django Message.objects.raw with the search term %-formatted into the SQL string"
+    },
+    {
+      "id": "d023",
+      "expect": [
+        "command-injection",
+        "sqli"
+      ],
+      "found": [
+        "command-injection",
+        "sqli"
+      ],
+      "ok": true,
+      "note": "data export interpolates user_id into SQL with % and runs tar via subprocess.run(shell=True) with a path built from user_id"
+    },
+    {
+      "id": "d024",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "psycopg sql.SQL(...).format(sql.Identifier) with an allow-listed table and %s parameters"
+    },
+    {
+      "id": "d025",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "SQLAlchemy text() with :named binds, asyncpg $1 placeholders and Django ORM icontains filter"
+    },
+    {
+      "id": "d026",
+      "expect": [
+        "command-injection"
+      ],
+      "found": [
+        "command-injection"
+      ],
+      "ok": true,
+      "note": "avatar thumbnail built with os.system and string concatenation of the uploaded file name"
+    },
+    {
+      "id": "d027",
+      "expect": [
+        "command-injection"
+      ],
+      "found": [
+        "command-injection"
+      ],
+      "ok": true,
+      "note": "exiftool command %-formatted with the stored upload path into a variable and run with check_output(shell=True)"
+    },
+    {
+      "id": "d028",
+      "expect": [
+        "command-injection"
+      ],
+      "found": [
+        "command-injection"
+      ],
+      "ok": true,
+      "note": "voice-note transcode uses asyncio.create_subprocess_shell with an f-string containing the client-supplied name"
+    },
+    {
+      "id": "d029",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "ffmpeg via argument list / create_subprocess_exec; the only shell=True call is a constant string"
+    },
+    {
+      "id": "d030",
+      "expect": [
+        "tls-verification-off"
+      ],
+      "found": [
+        "tls-verification-off"
+      ],
+      "ok": true,
+      "note": "moderation client posts with requests and verify=False"
+    },
+    {
+      "id": "d031",
+      "expect": [
+        "tls-verification-off"
+      ],
+      "found": [
+        "tls-verification-off"
+      ],
+      "ok": true,
+      "note": "embeddings client builds httpx.AsyncClient(verify=False) in __init__"
+    },
+    {
+      "id": "d032",
+      "expect": [
+        "tls-verification-off"
+      ],
+      "found": [
+        "tls-verification-off"
+      ],
+      "ok": true,
+      "note": "webhook delivery uses aiohttp ClientSession with TCPConnector(ssl=False)"
+    },
+    {
+      "id": "d033",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "requests verifies with an internal CA bundle, httpx uses a default SSL context with cafile; comment mentions verify=False"
+    },
+    {
+      "id": "d034",
+      "expect": [
+        "broker-without-auth",
+        "unsafe-deserialization"
+      ],
+      "found": [
+        "broker-without-auth",
+        "unsafe-deserialization"
+      ],
+      "ok": true,
+      "note": "redis.asyncio client with no password/TLS; cached values read back with pickle.loads"
+    },
+    {
+      "id": "d035",
+      "expect": [
+        "unsafe-deserialization"
+      ],
+      "found": [
+        "unsafe-deserialization"
+      ],
+      "ok": true,
+      "note": "character pack import parses the uploaded YAML with yaml.load(..., Loader=yaml.Loader)"
+    },
+    {
+      "id": "d036",
+      "expect": [
+        "unsafe-deserialization",
+        "unsafe-deserialization"
+      ],
+      "found": [
+        "unsafe-deserialization",
+        "unsafe-deserialization"
+      ],
+      "ok": true,
+      "note": "moderation model loaded with trust_remote_code=True; reward head loaded with torch.load without weights_only"
+    },
+    {
+      "id": "d037",
+      "expect": [
+        "unsafe-deserialization"
+      ],
+      "found": [
+        "unsafe-deserialization"
+      ],
+      "ok": true,
+      "note": "saved chat session state read from S3 and unpickled via 'import pickle as pkl'"
+    },
+    {
+      "id": "d038",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "yaml.safe_load, torch.load(weights_only=True) and JSON values from an authenticated TLS redis"
+    },
+    {
+      "id": "d039",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "yaml.load with Loader=yaml.SafeLoader, from_pretrained with trust_remote_code=False, safetensors load_file"
+    },
+    {
+      "id": "d040",
+      "expect": [
+        "jwt-unverified"
+      ],
+      "found": [
+        "jwt-unverified"
+      ],
+      "ok": true,
+      "note": "PyJWT decode with DECODE_OPTIONS module constant that sets verify_signature False"
+    },
+    {
+      "id": "d041",
+      "expect": [
+        "cors-credentials-wildcard",
+        "jwt-unverified"
+      ],
+      "found": [
+        "cors-credentials-wildcard",
+        "jwt-unverified"
+      ],
+      "ok": true,
+      "note": "CORSMiddleware allow_origins ['*'] with allow_credentials=True; auth accepts the 'none' algorithm"
+    },
+    {
+      "id": "d042",
+      "expect": [
+        "cors-credentials-wildcard",
+        "jwt-unverified"
+      ],
+      "found": [
+        "jwt-unverified"
+      ],
+      "ok": false,
+      "note": "flask_cors origins '*' with supports_credentials=True; before_request trusts jose get_unverified_claims"
+    },
+    {
+      "id": "d043",
+      "expect": [
+        "jwt-unverified"
+      ],
+      "found": [
+        "jwt-unverified",
+        "tls-verification-off"
+      ],
+      "ok": false,
+      "note": "Channels websocket consumer decodes the query-string JWT with legacy jwt.decode(token, verify=False)"
+    },
+    {
+      "id": "d044",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "PyJWKClient + get_unverified_header only to pick the key, then RS256 decode with audience; jose decode with verify_aud off but signature checked"
+    },
+    {
+      "id": "d045",
+      "expect": [
+        "broker-without-auth"
+      ],
+      "found": [
+        "broker-without-auth"
+      ],
+      "ok": true,
+      "note": "Kafka broker listens PLAINTEXT on 0.0.0.0:9092 with no SASL or TLS listener"
+    },
+    {
+      "id": "d046",
+      "expect": [
+        "broker-without-auth",
+        "datastore-exposed"
+      ],
+      "found": [
+        "broker-without-auth",
+        "datastore-exposed"
+      ],
+      "ok": true,
+      "note": "redis.conf binds 0.0.0.0 with protected-mode no and no auth; Service of type LoadBalancer publishes 6379 with no internal annotation"
+    },
+    {
+      "id": "d047",
+      "expect": [
+        "broker-without-auth"
+      ],
+      "found": [
+        "broker-without-auth"
+      ],
+      "ok": true,
+      "note": "aws_msk_cluster with client_authentication unauthenticated = true (SASL/IAM off)"
+    },
+    {
+      "id": "d048",
+      "expect": [
+        "broker-without-auth"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "confluent_kafka Producer config dict from settings has only bootstrap.servers/acks, no security.protocol"
+    },
+    {
+      "id": "d049",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "aiokafka and confluent-kafka use SASL_SSL with credentials from the environment; redis-py uses TLS and a password"
+    },
+    {
+      "id": "d050",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "Kafka external listener is SASL_SSL, PLAINTEXT only on 127.0.0.1; redis binds loopback with protected-mode and an ACL file"
+    },
+    {
+      "id": "d051",
+      "expect": [
+        "long-lived-media-url"
+      ],
+      "found": [
+        "long-lived-media-url"
+      ],
+      "ok": true,
+      "note": "presigned get_object URL for a user's private upload with ExpiresIn = 7 days"
+    },
+    {
+      "id": "d052",
+      "expect": [
+        "long-lived-media-url"
+      ],
+      "found": [
+        "long-lived-media-url"
+      ],
+      "ok": true,
+      "note": "GCS v4 signed URL for private chat images with expiration=timedelta(days=7)"
+    },
+    {
+      "id": "d053",
+      "expect": [
+        "long-lived-media-url"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "presign TTL comes from settings.media_url_ttl_seconds whose default is 48 hours"
+    },
+    {
+      "id": "d054",
+      "expect": [
+        "long-lived-media-url"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "CloudFrontSigner URL for voice notes with date_less_than = now + 30 days"
+    },
+    {
+      "id": "d055",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "presigned URLs last 15 minutes and exactly one day (86400 s) for export downloads; GCS URL 15 minutes"
+    },
+    {
+      "id": "d056",
+      "expect": [
+        "cors-credentials-wildcard"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "aiohttp_cors.setup defaults keyed '*' with allow_credentials=True"
+    },
+    {
+      "id": "d057",
+      "expect": [
+        "cors-credentials-wildcard",
+        "hardcoded-credential"
+      ],
+      "found": [
+        "hardcoded-credential",
+        "hardcoded-credential"
+      ],
+      "ok": false,
+      "note": "django-cors-headers CORS_ALLOW_ALL_ORIGINS with CORS_ALLOW_CREDENTIALS; DATABASES PASSWORD is a literal secret"
+    },
+    {
+      "id": "d058",
+      "expect": [
+        "cors-credentials-wildcard"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "CORSMiddleware allow_origin_regex from settings defaults to 'https?://.*' with allow_credentials=True"
+    },
+    {
+      "id": "d059",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "credentials allowed only for an explicit origin list and an anchored kindred.chat subdomain regex"
+    },
+    {
+      "id": "d060",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "public character catalogue allows any origin but without credentials (FastAPI and flask_cors)"
+    },
+    {
+      "id": "d061",
+      "expect": [
+        "hardcoded-credential",
+        "model-output-as-html"
+      ],
+      "found": [
+        "hardcoded-credential",
+        "model-output-as-html"
+      ],
+      "ok": true,
+      "note": "Anthropic SDK created in browser code with dangerouslyAllowBrowser and a bundled VITE key; reply rendered via dangerouslySetInnerHTML"
+    },
+    {
+      "id": "d062",
+      "expect": [
+        "model-output-as-html"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "Vue bubble renders a computed string (reply text with newlines turned into <br>) through v-html"
+    },
+    {
+      "id": "d063",
+      "expect": [
+        "model-output-as-html"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "Svelte component renders the assistant message body with {@html}"
+    },
+    {
+      "id": "d064",
+      "expect": [
+        "model-output-as-html",
+        "model-output-as-html"
+      ],
+      "found": [
+        "model-output-as-html",
+        "model-output-as-html"
+      ],
+      "ok": true,
+      "note": "streaming handler appends chunks with innerHTML +=; history renderer uses insertAdjacentHTML with reply text"
+    },
+    {
+      "id": "d065",
+      "expect": [],
+      "found": [
+        "model-output-as-html"
+      ],
+      "ok": false,
+      "note": "reply HTML sanitised by DOMPurify (img forbidden); plain text via JSX; a constant footer string uses dangerouslySetInnerHTML"
+    },
+    {
+      "id": "d066",
+      "expect": [
+        "markdown-image-exfiltration"
+      ],
+      "found": [
+        "markdown-image-exfiltration"
+      ],
+      "ok": true,
+      "note": "react-markdown with remark-gfm and default components renders model replies, images from any host"
+    },
+    {
+      "id": "d067",
+      "expect": [
+        "markdown-image-exfiltration"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "markdown-it output sanitised with DOMPurify (which keeps <img> from any https host) then set as innerHTML"
+    },
+    {
+      "id": "d068",
+      "expect": [
+        "markdown-image-exfiltration"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "Vue computed marked.parse(reply) sanitised by DOMPurify keeps images from any host"
+    },
+    {
+      "id": "d069",
+      "expect": [
+        "markdown-image-exfiltration"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "showdown output passed through sanitize-html configured to allow <img src> with http/https schemes"
+    },
+    {
+      "id": "d070",
+      "expect": [
+        "markdown-image-exfiltration"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "react-markdown overrides img with a lazy-loading <img> that still accepts any src"
+    },
+    {
+      "id": "d071",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "react-markdown with disallowedElements ['img'] and unwrapDisallowed"
+    },
+    {
+      "id": "d072",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "markdown-it with md.disable('image') and DOMPurify forbidding img"
+    },
+    {
+      "id": "d073",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "marked image renderer only emits <img> for media.kindred.chat, otherwise alt text; output sanitised"
+    },
+    {
+      "id": "d074",
+      "expect": [
+        "hardcoded-credential"
+      ],
+      "found": [
+        "hardcoded-credential"
+      ],
+      "ok": true,
+      "note": "React Native app creates an OpenAI client with the key from react-native-config (bundled into the app)"
+    },
+    {
+      "id": "d075",
+      "expect": [
+        "datastore-exposed",
+        "hardcoded-credential"
+      ],
+      "found": [
+        "datastore-exposed"
+      ],
+      "ok": false,
+      "note": "Deployment sets DB_PASSWORD as a literal env value; redis Service is type NodePort"
+    },
+    {
+      "id": "d076",
+      "expect": [
+        "datastore-exposed",
+        "datastore-exposed",
+        "hardcoded-credential"
+      ],
+      "found": [
+        "datastore-exposed",
+        "datastore-exposed",
+        "hardcoded-credential"
+      ],
+      "ok": true,
+      "note": "aws_db_instance with a literal password and publicly_accessible = true; security group opens 5432 to 0.0.0.0/0"
+    },
+    {
+      "id": "d077",
+      "expect": [
+        "datastore-exposed"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "Helm values expose Kafka through externalAccess Service type LoadBalancer with empty loadBalancerSourceRanges and no internal annotation"
+    },
+    {
+      "id": "d078",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "postgres LoadBalancer carries the AWS internal annotation; the internet-facing LoadBalancer is the web frontend on 443"
+    },
+    {
+      "id": "d079",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "security group opens only 443 to the world and 5432 to the VPC CIDR; RDS private with generated password; Kafka LB restricted by loadBalancerSourceRanges"
+    },
+    {
+      "id": "d080",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "settings read secrets from os.environ; .env.example holds placeholders only"
+    },
+    {
+      "id": "d081",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "Kubernetes env uses secretKeyRef; browser code calls the platform's /api/chat instead of creating an SDK client"
+    },
+    {
+      "id": "d082",
+      "expect": [
+        "database-rules-public"
+      ],
+      "found": [
+        "database-rules-public",
+        "database-rules-public"
+      ],
+      "ok": false,
+      "note": "Realtime Database rules set .read and .write true at the root"
+    },
+    {
+      "id": "d083",
+      "expect": [
+        "database-rules-public",
+        "database-rules-public"
+      ],
+      "found": [
+        "database-rules-public",
+        "database-rules-public",
+        "database-rules-public"
+      ],
+      "ok": false,
+      "note": "conversations readable/writable by any signed-in user (auth != null); uploads/$uid readable by everyone; publicCharacters is fine"
+    },
+    {
+      "id": "d084",
+      "expect": [
+        "database-rules-public"
+      ],
+      "found": [
+        "database-rules-public"
+      ],
+      "ok": true,
+      "note": "Firestore rule lets any signed-in user read and write every user's memories"
+    },
+    {
+      "id": "d085",
+      "expect": [
+        "database-rules-public"
+      ],
+      "found": [],
+      "ok": false,
+      "note": "Firestore test-mode rule: everything readable and writable by anyone until a date"
+    },
+    {
+      "id": "d086",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "Firestore user data limited to the owner; published character cards readable by anyone"
+    },
+    {
+      "id": "d087",
+      "expect": [
+        "bucket-public",
+        "bucket-public"
+      ],
+      "found": [
+        "bucket-public",
+        "bucket-public"
+      ],
+      "ok": true,
+      "note": "uploads bucket has every public access block flag false and a bucket policy granting s3:GetObject to Principal '*'"
+    },
+    {
+      "id": "d088",
+      "expect": [
+        "bucket-public",
+        "bucket-public"
+      ],
+      "found": [
+        "bucket-public",
+        "bucket-public"
+      ],
+      "ok": true,
+      "note": "GCS chat-images bucket grants objectViewer to allUsers; voice-notes bucket binding includes allAuthenticatedUsers"
+    },
+    {
+      "id": "d089",
+      "expect": [
+        "bucket-public"
+      ],
+      "found": [
+        "bucket-public"
+      ],
+      "ok": true,
+      "note": "chat export bucket ACL set to public-read"
+    },
+    {
+      "id": "d090",
+      "expect": [],
+      "found": [],
+      "ok": true,
+      "note": "public access block all true; bucket policy grants only the CloudFront service principal for one distribution"
+    }
+  ],
+  "skipped": [],
+  "at": "2026-10-24T14:04:08+00:00"
+}

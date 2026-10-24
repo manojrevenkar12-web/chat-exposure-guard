@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: web
+spec:
+  type: LoadBalancer
+  selector:
+    app: web
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8443

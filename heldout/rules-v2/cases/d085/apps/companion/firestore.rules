@@ -1,0 +1,10 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Test mode. Tighten before launch.
+    match /{document=**} {
+      allow read, write: if request.time < timestamp.date(2027, 1, 31);
+    }
+  }
+}

@@ -1,0 +1,25 @@
+kafka:
+  replicaCount: 3
+  listeners:
+    client:
+      protocol: SASL_SSL
+    external:
+      protocol: SASL_SSL
+  sasl:
+    enabledMechanisms: SCRAM-SHA-512
+    existingSecret: kafka-sasl-users
+  externalAccess:
+    enabled: true
+    autoDiscovery:
+      enabled: true
+    service:
+      type: LoadBalancer
+      ports:
+        external: 9094
+      loadBalancerSourceRanges: []
+      annotations: {}
+  persistence:
+    size: 200Gi
+  metrics:
+    jmx:
+      enabled: true

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chat-api
+  namespace: chat
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: chat-api
+  template:
+    metadata:
+      labels:
+        app: chat-api
+    spec:
+      containers:
+        - name: api
+          image: registry.kindred.chat/chat-api:2026.10.3
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_HOST
+              value: postgres.data.svc.cluster.local
+            - name: DB_USER
+              value: chat_api
+            - name: DB_PASSWORD
+              value: "h8Rk2vQz7mLp4sXn1cTb9wJe"
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: llm-keys
+                  key: anthropic
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi

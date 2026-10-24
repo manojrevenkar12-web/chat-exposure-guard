@@ -59,7 +59,20 @@ disappears from the dashboard and its due date, and comes back later as a "new" 
   so this shows the rules work, not how well they generalise.
 - How well they generalise is what the held-out set measures:
 
-RULES_HELDOUT
+| Set | Status | Cases | Found (recall) | False alarms (precision) | Safe look-alikes left alone |
+|---|---|---|---|---|---|
+| [`rules-v1`](heldout/rules-v1) | regression (studied) | 80 | 40 of 58 (0.69) | 21 (0.66) | 19 of 26 |
+| [`rules-v2`](heldout/rules-v2) | **held out** | 90 | **55 of 81 (0.68)** | **5 (0.92)** | **29 of 30** |
+
+  Both are first runs ([`reports/heldout/`](reports/heldout)), each set written by a different
+  writer from [`WRITING_CASES.md`](heldout/WRITING_CASES.md) without access to the code. rules-v1
+  was scored on raw tool output; from v2 on, a case is scored on the issues the tracker opens (one
+  per weakness), as the product reports them. rules-v1 led to the fixes listed below; v2, written
+  after them, shows they raised precision but not recall: about a third of the weaknesses in code
+  that looks different from the examples are still missed (IDOR through repositories and class
+  views in Flask, Django and aiohttp; chat text logged through structlog and helpers; CORS and
+  Markdown renderers set up in ways no rule covers yet). Its failures have not been studied or
+  fixed; when they are, it becomes a regression set and a new set is written.
 
 ### Prompt injection
 
